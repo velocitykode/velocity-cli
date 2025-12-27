@@ -155,36 +155,34 @@ func replaceModuleName(projectPath, moduleName string) error {
 	// Get absolute path
 	absPath, err := filepath.Abs(projectPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("abs path: %w", err)
 	}
 
 	// Use find and sed to replace in all Go files
 	cmd := exec.Command("sh", "-c",
 		fmt.Sprintf("cd '%s' && find . -name '*.go' -type f -exec sed -i '' 's|{{MODULE_NAME}}|%s|g' {} +", absPath, moduleName))
-	if err := cmd.Run(); err != nil {
-		return err
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("replace go files: %w: %s", err, string(output))
 	}
 
 	// Replace in go.mod
 	cmd = exec.Command("sh", "-c",
 		fmt.Sprintf("cd '%s' && sed -i '' 's|{{MODULE_NAME}}|%s|g' go.mod", absPath, moduleName))
-	if err := cmd.Run(); err != nil {
-		return err
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("replace go.mod: %w: %s", err, string(output))
 	}
 
 	// Replace in package.json
 	cmd = exec.Command("sh", "-c",
 		fmt.Sprintf("cd '%s' && sed -i '' 's|{{MODULE_NAME}}|%s|g' package.json", absPath, moduleName))
-	if err := cmd.Run(); err != nil {
-		return err
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("replace package.json: %w: %s", err, string(output))
 	}
 
-	// Replace in package-lock.json
+	// Replace in package-lock.json (if exists)
 	cmd = exec.Command("sh", "-c",
-		fmt.Sprintf("cd '%s' && sed -i '' 's|{{MODULE_NAME}}|%s|g' package-lock.json", absPath, moduleName))
-	if err := cmd.Run(); err != nil {
-		return err
-	}
+		fmt.Sprintf("cd '%s' && [ -f package-lock.json ] && sed -i '' 's|{{MODULE_NAME}}|%s|g' package-lock.json || true", absPath, moduleName))
+	cmd.Run() // Ignore error - file may not exist
 
 	// Update velocity replace directive based on location
 	// Check common locations for velocity framework
