@@ -799,7 +799,7 @@ func StartDevServers(projectPath string) {
 
 	// Show URLs
 	fmt.Printf("  Vite: %shttp://localhost:5173%s\n", colorCyan, colorReset)
-	fmt.Printf("  Velocity: %shttp://localhost:8080%s\n", colorCyan, colorReset)
+	fmt.Printf("  Velocity: %shttp://localhost:3000%s\n", colorCyan, colorReset)
 
 	fmt.Printf("\n\n%sBuild something great!%s\n", colorGreen, colorReset)
 }

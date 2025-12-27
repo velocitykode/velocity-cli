@@ -39,7 +39,7 @@ Get started with:
   cd %s
   go run main.go serve
 
-Visit http://localhost:8080`, projectName, projectName)
+Visit http://localhost:3000`, projectName, projectName)
 
 	fmt.Println(successBox.Render(successMsg))
 }
