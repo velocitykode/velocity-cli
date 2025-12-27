@@ -1,0 +1,145 @@
+package controllers
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"github.com/velocitystack/velocity/pkg/log"
+)
+
+// AuthController handles authentication
+type AuthController struct{}
+
+// ShowLogin displays the login form
+func (c AuthController) ShowLogin(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	fmt.Fprint(w, `
+		<h1>Login</h1>
+		<form method="POST" action="/login">
+			<input type="email" name="email" placeholder="Email" required><br>
+			<input type="password" name="password" placeholder="Password" required><br>
+			<button type="submit">Login</button>
+		</form>
+		<p><a href="/register">Need an account? Register</a></p>
+	`)
+}
+
+// Login handles user login
+func (c AuthController) Login(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		c.ShowLogin(w, r)
+		return
+	}
+
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+
+	// TODO: Validate credentials against database
+	log.Info("Login attempt", "email", email)
+
+	// For demo, accept any non-empty credentials
+	if email != "" && password != "" {
+		// TODO: Create session/JWT token
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session",
+			Value:    "demo-session-token",
+			Path:     "/",
+			HttpOnly: true,
+		})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	w.WriteHeader(http.StatusUnauthorized)
+	fmt.Fprint(w, "Invalid credentials")
+}
+
+// ShowRegister displays the registration form
+func (c AuthController) ShowRegister(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	fmt.Fprint(w, `
+		<h1>Register</h1>
+		<form method="POST" action="/register">
+			<input type="text" name="name" placeholder="Name" required><br>
+			<input type="email" name="email" placeholder="Email" required><br>
+			<input type="password" name="password" placeholder="Password" required><br>
+			<button type="submit">Register</button>
+		</form>
+		<p><a href="/login">Already have an account? Login</a></p>
+	`)
+}
+
+// Register handles user registration
+func (c AuthController) Register(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		c.ShowRegister(w, r)
+		return
+	}
+
+	name := r.FormValue("name")
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+
+	// TODO: Validate and save user to database
+	log.Info("Registration", "name", name, "email", email)
+
+	// For demo, accept any registration
+	if name != "" && email != "" && password != "" {
+		// TODO: Create user and session
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session",
+			Value:    "demo-session-token",
+			Path:     "/",
+			HttpOnly: true,
+		})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	w.WriteHeader(http.StatusBadRequest)
+	fmt.Fprint(w, "All fields are required")
+}
+
+// Logout handles user logout
+func (c AuthController) Logout(w http.ResponseWriter, r *http.Request) {
+	// Clear session cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:   "session",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
+	
+	log.Info("User logged out")
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// LoginAPI handles API login
+func (c AuthController) LoginAPI(w http.ResponseWriter, r *http.Request) {
+	var credentials struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request"})
+		return
+	}
+
+	// TODO: Validate credentials
+	if credentials.Email != "" && credentials.Password != "" {
+		// TODO: Generate JWT token
+		response := map[string]string{
+			"token": "api_demo_token_1234567890",
+			"type":  "Bearer",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	w.WriteHeader(http.StatusUnauthorized)
+	json.NewEncoder(w).Encode(map[string]string{"error": "Invalid credentials"})
+}
