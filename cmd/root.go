@@ -8,7 +8,7 @@ import (
 )
 
 // Version is the CLI version - single source of truth
-const Version = "0.2.1"
+const Version = "0.3.0"
 
 // Remove duplicate root command - it's defined in main.go
 
