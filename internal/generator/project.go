@@ -770,8 +770,13 @@ func StartDevServers(projectPath string) {
 		return
 	}
 
-	// Start air for hot reloading
-	goCmd := exec.Command("air")
+	// Start Go server (air for hot reload, fallback to go run)
+	var goCmd *exec.Cmd
+	if _, err := exec.LookPath("air"); err == nil {
+		goCmd = exec.Command("air")
+	} else {
+		goCmd = exec.Command("go", "run", "main.go")
+	}
 	goCmd.Dir = absPath
 	if err := goCmd.Start(); err != nil {
 		fmt.Printf("Failed to start Go server: %v\n", err)
