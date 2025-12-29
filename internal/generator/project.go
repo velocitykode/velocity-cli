@@ -242,6 +242,9 @@ func installDependencies(projectPath string) error {
 		return err
 	}
 
+	// Install air for hot reloading
+	exec.Command("go", "install", "github.com/air-verse/air@latest").Run()
+
 	// Run bun install (fallback to npm if bun not available)
 	if err := exec.Command("bun", "install").Run(); err != nil {
 		// Try npm as fallback
@@ -770,13 +773,8 @@ func StartDevServers(projectPath string) {
 		return
 	}
 
-	// Start Go server (air for hot reload, fallback to go run)
-	var goCmd *exec.Cmd
-	if _, err := exec.LookPath("air"); err == nil {
-		goCmd = exec.Command("air")
-	} else {
-		goCmd = exec.Command("go", "run", "main.go")
-	}
+	// Start air for hot reloading
+	goCmd := exec.Command("air")
 	goCmd.Dir = absPath
 	if err := goCmd.Start(); err != nil {
 		fmt.Printf("Failed to start Go server: %v\n", err)
