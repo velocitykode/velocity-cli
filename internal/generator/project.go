@@ -80,52 +80,65 @@ func CreateProject(config ProjectConfig) error {
 	printInfo("Creating new Velocity project.")
 
 	// Clone template
-	start := time.Now()
-	if err := cloneTemplate(config.Name); err != nil {
+	duration, err := runStep("Cloning project template", func() error {
+		return cloneTemplate(config.Name)
+	})
+	if err != nil {
 		return fmt.Errorf("failed to clone template: %w", err)
 	}
-	fmt.Println(formatLine("Cloning project template", time.Since(start)))
+	fmt.Println(formatLine("Cloning project template", duration))
 
 	// Replace module name in all files
-	start = time.Now()
-	if err := replaceModuleName(config.Name, moduleName); err != nil {
+	duration, err = runStep("Configuring project module", func() error {
+		return replaceModuleName(config.Name, moduleName)
+	})
+	if err != nil {
 		return fmt.Errorf("failed to configure project: %w", err)
 	}
-	fmt.Println(formatLine("Configuring project module", time.Since(start)))
+	fmt.Println(formatLine("Configuring project module", duration))
 
 	// Remove template git history and initialize new repo
-	start = time.Now()
-	if err := reinitGitRepo(config.Name); err != nil {
+	duration, err = runStep("Initializing Git repository", func() error {
+		return reinitGitRepo(config.Name)
+	})
+	if err != nil {
 		return fmt.Errorf("failed to initialize git: %w", err)
 	}
-	fmt.Println(formatLine("Initializing Git repository", time.Since(start)))
+	fmt.Println(formatLine("Initializing Git repository", duration))
 
 	// Create default migrations
-	start = time.Now()
-	if err := createDefaultMigrations(config.Name); err != nil {
+	duration, err = runStep("Creating default migrations", func() error {
+		return createDefaultMigrations(config.Name)
+	})
+	if err != nil {
 		return fmt.Errorf("failed to create migrations: %w", err)
 	}
-	fmt.Println(formatLine("Creating default migrations", time.Since(start)))
+	fmt.Println(formatLine("Creating default migrations", duration))
 
 	// Create proper .env.example with database config
-	start = time.Now()
-	if err := createEnvFiles(config); err != nil {
+	duration, err = runStep("Setting up environment files", func() error {
+		return createEnvFiles(config)
+	})
+	if err != nil {
 		return fmt.Errorf("failed to create env files: %w", err)
 	}
-	fmt.Println(formatLine("Setting up environment files", time.Since(start)))
+	fmt.Println(formatLine("Setting up environment files", duration))
 
-	start = time.Now()
-	if err := setupTemplatesAndHotReload(config.Name); err != nil {
+	// Setup hot reload
+	duration, err = runStep("Configuring hot reload", func() error {
+		return setupTemplatesAndHotReload(config.Name)
+	})
+	if err != nil {
 		return fmt.Errorf("failed to setup templates: %w", err)
 	}
-	fmt.Println(formatLine("Configuring hot reload", time.Since(start)))
+	fmt.Println(formatLine("Configuring hot reload", duration))
 
 	// Install dependencies
-	start = time.Now()
-	if err := installDependencies(config.Name); err != nil {
-		// Don't fail, just skip - user can install manually
-	} else {
-		fmt.Println(formatLine("Installing dependencies", time.Since(start)))
+	duration, err = runStep("Installing dependencies", func() error {
+		return installDependencies(config.Name)
+	})
+	if err == nil {
+		fmt.Println(formatLine("Installing dependencies", duration))
 	}
 
 	// Run migrations
