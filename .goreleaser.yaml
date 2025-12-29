@@ -17,10 +17,11 @@ builds:
 
 archives:
   - id: velocity
-    builds:
+    ids:
       - velocity
     name_template: "velocity-{{ .Os }}-{{ .Arch }}"
-    format: tar.gz
+    formats:
+      - tar.gz
 
 checksum:
   name_template: "checksums.txt"
