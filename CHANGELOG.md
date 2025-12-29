@@ -5,6 +5,13 @@ All notable changes to Velocity CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-12-29
+
+### Fixed
+- Test output capture using `cmd.OutOrStdout()` instead of direct stdout
+- Controller test expected filename (snake_case)
+- Removed lint job from CI
+
 ## [0.2.0] - 2025-12-29
 
 ### Added
