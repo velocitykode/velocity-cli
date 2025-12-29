@@ -202,10 +202,9 @@ func main() {
 
 	// Build
 	buildCmd := exec.Command("go", "build", "-o", fmt.Sprintf("%s/migrate", tmpDir), tmpFile)
-	buildCmd.Stderr = nil // Suppress stderr
-	buildCmd.Stdout = nil // Suppress stdout
-	if err := buildCmd.Run(); err != nil {
-		fmt.Println(colors.ErrorStyle.Render(fmt.Sprintf("❌ Build failed: %v", err)))
+	buildOutput, err := buildCmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(colors.ErrorStyle.Render(fmt.Sprintf("❌ Build failed: %v\n%s", err, string(buildOutput))))
 		os.Exit(1)
 	}
 

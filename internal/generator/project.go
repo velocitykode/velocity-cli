@@ -348,7 +348,7 @@ func initGoModule(config ProjectConfig) error {
 		fmt.Printf("    %s Using local Velocity framework\n", blue("+"))
 	} else {
 		// Try to get from GitHub (requires GOPRIVATE setup for private repos)
-		cmd = exec.Command("go", "get", "github.com/velocitykode/velocity")
+		cmd = exec.Command("go", "get", "github.com/velocitykode/velocity@v0.0.3")
 		if err := cmd.Run(); err != nil {
 			fmt.Printf("    %s Note: Configure GOPRIVATE for private repo access\n", yellow("!"))
 		}
@@ -736,10 +736,9 @@ func main() {
 
 	// Build
 	buildCmd := exec.Command("go", "build", "-o", fmt.Sprintf("%s/migrate", tmpDir), tmpFile)
-	buildCmd.Stderr = nil
-	buildCmd.Stdout = nil
-	if err := buildCmd.Run(); err != nil {
-		return fmt.Errorf("failed to build migration runner: %w", err)
+	buildOutput, err := buildCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to build migration runner: %w\n%s", err, string(buildOutput))
 	}
 
 	// Run
