@@ -191,11 +191,11 @@ func replaceModuleName(projectPath, moduleName string) error {
 		return err
 	}
 
-	// Get pinned version of velocity framework
-	cmd = exec.Command("go", "get", "github.com/velocitykode/velocity@v0.0.3")
+	// Set pinned version of velocity framework
+	cmd = exec.Command("go", "mod", "edit", "-require=github.com/velocitykode/velocity@v0.0.3")
 	cmd.Dir = absPath
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to get velocity framework: %w", err)
+		return fmt.Errorf("failed to set velocity framework version: %w", err)
 	}
 
 	return nil
