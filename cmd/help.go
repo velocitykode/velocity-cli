@@ -22,37 +22,39 @@ func InitHelp(root *cobra.Command) {
 }
 
 func customHelpFunc(cmd *cobra.Command, args []string) {
+	w := cmd.OutOrStdout()
+
 	// Show banner
-	fmt.Println(banner.MediumBlocky())
-	fmt.Println()
+	fmt.Fprintln(w, banner.MediumBlocky())
+	fmt.Fprintln(w)
 
 	// Usage
-	fmt.Println(sectionStyle.Render("Usage:"))
-	fmt.Printf("  %s [command]\n", cmd.CommandPath())
-	fmt.Println()
+	fmt.Fprintln(w, sectionStyle.Render("Usage:"))
+	fmt.Fprintf(w, "  %s [command]\n", cmd.CommandPath())
+	fmt.Fprintln(w)
 
 	// Commands
 	if len(cmd.Commands()) > 0 {
-		fmt.Println(sectionStyle.Render("Commands:"))
+		fmt.Fprintln(w, sectionStyle.Render("Commands:"))
 		for _, c := range cmd.Commands() {
 			if !c.Hidden {
-				fmt.Printf("  %s  %s\n",
+				fmt.Fprintf(w, "  %s  %s\n",
 					commandStyle.Width(24).Render(c.Name()),
 					descStyle.Render(c.Short))
 			}
 		}
-		fmt.Println()
+		fmt.Fprintln(w)
 	}
 
 	// Flags
 	if cmd.HasAvailableLocalFlags() {
-		fmt.Println(sectionStyle.Render("Flags:"))
-		fmt.Println(descStyle.Render(cmd.LocalFlags().FlagUsages()))
+		fmt.Fprintln(w, sectionStyle.Render("Flags:"))
+		fmt.Fprintln(w, descStyle.Render(cmd.LocalFlags().FlagUsages()))
 	}
 
 	// Footer
-	fmt.Println(descStyle.Render("Use \"velocity [command] --help\" for more information about a command"))
-	fmt.Println()
+	fmt.Fprintln(w, descStyle.Render("Use \"velocity [command] --help\" for more information about a command"))
+	fmt.Fprintln(w)
 }
 
 func customUsageFunc(cmd *cobra.Command) error {

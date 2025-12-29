@@ -27,12 +27,12 @@ type ProjectConfig struct {
 // CreateProject generates a new Velocity project from template
 func CreateProject(config ProjectConfig) error {
 	const (
-		colorReset      = "\033[0m"
-		colorGreen      = "\033[32m"
-		colorBlue       = "\033[34m"
-		colorWhite      = "\033[37m"
-		bold            = "\033[1m"
-		underline       = "\033[4m"
+		colorReset = "\033[0m"
+		colorGreen = "\033[32m"
+		colorBlue  = "\033[34m"
+		colorWhite = "\033[37m"
+		bold       = "\033[1m"
+		underline  = "\033[4m"
 	)
 
 	formatLine := func(text string, duration time.Duration) string {

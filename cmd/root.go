@@ -16,11 +16,12 @@ var VersionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print version information",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println()
+		w := cmd.OutOrStdout()
+		fmt.Fprintln(w)
 		// Show compact banner for version
-		fmt.Println(colors.BrandStyle.Render("╔══════════════════════════════════════╗"))
-		fmt.Println(colors.BrandStyle.Render("║        VELOCITY CLI v" + Version + "        ║"))
-		fmt.Println(colors.BrandStyle.Render("╚══════════════════════════════════════╝"))
-		fmt.Println()
+		fmt.Fprintln(w, colors.BrandStyle.Render("╔══════════════════════════════════════╗"))
+		fmt.Fprintln(w, colors.BrandStyle.Render("║        VELOCITY CLI v"+Version+"        ║"))
+		fmt.Fprintln(w, colors.BrandStyle.Render("╚══════════════════════════════════════╝"))
+		fmt.Fprintln(w)
 	},
 }

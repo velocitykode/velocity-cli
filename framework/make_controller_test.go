@@ -117,8 +117,8 @@ func TestGenerateResourceController(t *testing.T) {
 	// Test generating a resource controller
 	generateController("Post")
 
-	// Check that controller file was created
-	controllerPath := filepath.Join("app", "controllers", "PostController.go")
+	// Check that controller file was created (snake_case filename)
+	controllerPath := filepath.Join("app", "controllers", "post_controller.go")
 	content, err := os.ReadFile(controllerPath)
 	if err != nil {
 		t.Fatalf("Failed to read controller file: %v", err)
