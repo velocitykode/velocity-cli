@@ -23,17 +23,13 @@ func TestVersionCmd(t *testing.T) {
 		t.Error("Version output does not contain banner box characters")
 	}
 
-	if !strings.Contains(output, "0.1.0") {
-		t.Errorf("Version output does not contain version number %s", version)
+	if !strings.Contains(output, Version) {
+		t.Errorf("Version output does not contain version number %s", Version)
 	}
 }
 
 func TestVersionValue(t *testing.T) {
-	if version == "" {
+	if Version == "" {
 		t.Error("Version is empty")
-	}
-
-	if version != "0.1.0" {
-		t.Errorf("Version = %s, want 0.1.0", version)
 	}
 }

@@ -7,7 +7,8 @@ import (
 	"github.com/velocitykode/velocity-cli/internal/colors"
 )
 
-var version = "0.1.0"
+// Version is the CLI version - single source of truth
+const Version = "0.1.1"
 
 // Remove duplicate root command - it's defined in main.go
 
@@ -18,7 +19,7 @@ var VersionCmd = &cobra.Command{
 		fmt.Println()
 		// Show compact banner for version
 		fmt.Println(colors.BrandStyle.Render("╔══════════════════════════════════════╗"))
-		fmt.Println(colors.BrandStyle.Render("║        VELOCITY CLI v" + version + "        ║"))
+		fmt.Println(colors.BrandStyle.Render("║        VELOCITY CLI v" + Version + "        ║"))
 		fmt.Println(colors.BrandStyle.Render("╚══════════════════════════════════════╝"))
 		fmt.Println()
 	},

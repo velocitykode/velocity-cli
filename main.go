@@ -1,18 +1,27 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/velocitykode/velocity-cli/cmd"
 	"github.com/velocitykode/velocity-cli/framework"
-	"os"
+	"github.com/velocitykode/velocity-cli/internal/version"
 )
 
 func main() {
+	// Check Go version immediately - Velocity requires Go 1.25+
+	if err := version.CheckGoVersion(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
 	// Create unified root command
 	rootCmd := &cobra.Command{
 		Use:     "velocity",
 		Short:   "CLI for the Velocity Go web framework",
-		Version: "0.1.0",
+		Version: cmd.Version,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.Help()
 		},
