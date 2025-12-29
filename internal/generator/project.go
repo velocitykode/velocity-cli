@@ -184,36 +184,18 @@ func replaceModuleName(projectPath, moduleName string) error {
 		fmt.Sprintf("cd '%s' && [ -f package-lock.json ] && sed -i '' 's|{{MODULE_NAME}}|%s|g' package-lock.json || true", absPath, moduleName))
 	cmd.Run() // Ignore error - file may not exist
 
-	// Update velocity replace directive based on location
-	// Check common locations for velocity framework
-	commonPaths := []string{
-		"/Users/ali/code/velocity",
-		filepath.Join(os.Getenv("HOME"), "code", "velocity"),
-		filepath.Join(filepath.Dir(absPath), "velocity"), // sibling directory
+	// Remove replace directive and fetch pinned version
+	cmd = exec.Command("sh", "-c",
+		fmt.Sprintf("cd '%s' && sed -i '' '/^replace github.com\\/velocitykode\\/velocity/d' go.mod", absPath))
+	if err := cmd.Run(); err != nil {
+		return err
 	}
 
-	foundPath := ""
-	for _, path := range commonPaths {
-		if _, err := os.Stat(path); err == nil {
-			foundPath = path
-			break
-		}
-	}
-
-	if foundPath != "" {
-		// Use found path - replace the entire replace directive line
-		cmd = exec.Command("sh", "-c",
-			fmt.Sprintf("cd '%s' && sed -i '' 's|^replace github.com/velocitykode/velocity => ../velocity|replace github.com/velocitykode/velocity => %s|' go.mod", absPath, foundPath))
-		if err := cmd.Run(); err != nil {
-			return err
-		}
-	} else {
-		// Remove replace directive if velocity not found locally
-		cmd = exec.Command("sh", "-c",
-			fmt.Sprintf("cd '%s' && sed -i '' '/^replace github.com\\/velocitykode\\/velocity/d' go.mod", absPath))
-		if err := cmd.Run(); err != nil {
-			return err
-		}
+	// Get pinned version of velocity framework
+	cmd = exec.Command("go", "get", "github.com/velocitykode/velocity@v0.0.3")
+	cmd.Dir = absPath
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to get velocity framework: %w", err)
 	}
 
 	return nil
