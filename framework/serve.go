@@ -120,7 +120,7 @@ func runWithWatcher() {
 
 		if output, err := buildCmd.CombinedOutput(); err != nil {
 			ui.Error("Build failed:")
-			fmt.Printf("%s\n", output)
+			ui.Muted(string(output))
 			return
 		}
 

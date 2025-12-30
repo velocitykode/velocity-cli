@@ -38,8 +38,6 @@ var NewCmd = &cobra.Command{
 		}
 
 		ui.Newline()
-		ui.Success("Project created successfully!")
-		ui.Newline()
 		ui.Info("Starting development servers")
 
 		generator.StartDevServers(projectName)

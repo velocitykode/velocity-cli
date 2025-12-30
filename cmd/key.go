@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
 var KeyCmd = &cobra.Command{
@@ -33,7 +34,7 @@ func init() {
 func runKeyGenerate(cmd *cobra.Command, args []string) {
 	key, err := generateKey()
 	if err != nil {
-		fmt.Printf("Error generating key: %v\n", err)
+		ui.Error(fmt.Sprintf("Error generating key: %v", err))
 		exitFunc(1)
 		return
 	}
@@ -46,13 +47,13 @@ func runKeyGenerate(cmd *cobra.Command, args []string) {
 	}
 
 	if err := updateEnvFile(fullKey); err != nil {
-		fmt.Printf("Error updating .env: %v\n", err)
-		fmt.Printf("\nGenerated key (add manually):\nCRYPTO_KEY=%s\n", fullKey)
+		ui.Error(fmt.Sprintf("Error updating .env: %v", err))
+		ui.Muted(fmt.Sprintf("Generated key (add manually): CRYPTO_KEY=%s", fullKey))
 		exitFunc(1)
 		return
 	}
 
-	fmt.Println("Application key set successfully.")
+	ui.Success("Application key set successfully")
 }
 
 func generateKey() (string, error) {

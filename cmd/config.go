@@ -128,9 +128,9 @@ func runConfigGet(cmd *cobra.Command, args []string) error {
 	}
 
 	if value == "" || value == "false" {
-		fmt.Println("(not set)")
+		ui.Muted("(not set)")
 	} else {
-		fmt.Println(value)
+		ui.Info(value)
 	}
 
 	return nil
@@ -143,22 +143,22 @@ func runConfigList(cmd *cobra.Command, args []string) error {
 	}
 
 	path, _ := config.ConfigPath()
-	fmt.Printf("Configuration (%s):\n", path)
+	ui.Info(fmt.Sprintf("Configuration (%s)", path))
 
 	if cfg.Defaults.Database != "" {
-		fmt.Printf("  default.database: %s\n", cfg.Defaults.Database)
+		ui.KeyValue("default.database", cfg.Defaults.Database)
 	}
 	if cfg.Defaults.Cache != "" {
-		fmt.Printf("  default.cache: %s\n", cfg.Defaults.Cache)
+		ui.KeyValue("default.cache", cfg.Defaults.Cache)
 	}
 	if cfg.Defaults.Queue != "" {
-		fmt.Printf("  default.queue: %s\n", cfg.Defaults.Queue)
+		ui.KeyValue("default.queue", cfg.Defaults.Queue)
 	}
 	if cfg.Defaults.Auth {
-		fmt.Printf("  default.auth: true\n")
+		ui.KeyValue("default.auth", "true")
 	}
 	if cfg.Defaults.API {
-		fmt.Printf("  default.api: true\n")
+		ui.KeyValue("default.api", "true")
 	}
 
 	return nil

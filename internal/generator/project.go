@@ -37,68 +37,62 @@ func CreateProject(config ProjectConfig) error {
 	}
 
 	ui.Info("Creating new Velocity project")
-	ui.Step("Cloning project template...")
 
 	// Clone template
-	if err := cloneTemplate(config.Name); err != nil {
+	if err := ui.Spinner("Cloning template", func() error {
+		return cloneTemplate(config.Name)
+	}); err != nil {
 		return fmt.Errorf("failed to clone template: %w", err)
 	}
-	ui.Newline()
 	ui.Success("Template cloned")
-	ui.Step("Configuring project module...")
 
 	// Replace module name in all files
-	if err := replaceModuleName(config.Name, moduleName); err != nil {
+	if err := ui.Spinner("Configuring module", func() error {
+		return replaceModuleName(config.Name, moduleName)
+	}); err != nil {
 		return fmt.Errorf("failed to configure project: %w", err)
 	}
-	ui.Newline()
 	ui.Success("Module configured")
-	ui.Step("Initializing Git repository...")
 
 	// Remove template git history and initialize new repo
-	if err := reinitGitRepo(config.Name); err != nil {
+	if err := ui.Spinner("Initializing Git", func() error {
+		return reinitGitRepo(config.Name)
+	}); err != nil {
 		return fmt.Errorf("failed to initialize git: %w", err)
 	}
-	ui.Newline()
 	ui.Success("Git initialized")
-	ui.Step("Creating default migrations...")
 
 	// Create default migrations
 	if err := createDefaultMigrations(config.Name); err != nil {
 		return fmt.Errorf("failed to create migrations: %w", err)
 	}
-	ui.Newline()
 	ui.Success("Migrations created")
-	ui.Step("Setting up environment files...")
 
 	// Create proper .env.example with database config
 	if err := createEnvFiles(config); err != nil {
 		return fmt.Errorf("failed to create env files: %w", err)
 	}
-	ui.Newline()
 	ui.Success("Environment configured")
-	ui.Step("Configuring hot reload...")
 
 	// Setup hot reload
 	if err := setupTemplatesAndHotReload(config.Name); err != nil {
 		return fmt.Errorf("failed to setup templates: %w", err)
 	}
-	ui.Newline()
 	ui.Success("Hot reload configured")
-	ui.Step("Installing dependencies...")
 
 	// Install dependencies
-	if err := installDependencies(config.Name); err == nil {
-		ui.Newline()
+	if err := ui.Spinner("Installing dependencies", func() error {
+		return installDependencies(config.Name)
+	}); err == nil {
 		ui.Success("Dependencies installed")
 	}
-	ui.Step("Running migrations...")
 
 	// Run migrations
+	ui.Newline()
+	ui.Info("Running migrations...")
 	if err := runMigrations(config.Name); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
-	ui.Newline()
 	ui.Success("Database ready")
 
 	return nil
@@ -660,15 +654,9 @@ func getProjectModuleName() (string, error) {
 
 // StartDevServers starts npm run dev and go run main.go in background
 func StartDevServers(projectPath string) {
-	const (
-		colorReset = "\033[0m"
-		colorGreen = "\033[32m"
-		colorCyan  = "\033[36m"
-	)
-
 	absPath, err := filepath.Abs(projectPath)
 	if err != nil {
-		fmt.Printf("Failed to resolve project path: %v\n", err)
+		ui.Error(fmt.Sprintf("Failed to resolve project path: %v", err))
 		return
 	}
 
@@ -677,7 +665,7 @@ func StartDevServers(projectPath string) {
 	npmCmd.Dir = absPath
 	npmCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := npmCmd.Start(); err != nil {
-		fmt.Printf("Failed to start npm: %v\n", err)
+		ui.Error(fmt.Sprintf("Failed to start npm: %v", err))
 		return
 	}
 
@@ -686,11 +674,12 @@ func StartDevServers(projectPath string) {
 	goCmd.Dir = absPath
 	goCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := goCmd.Start(); err != nil {
-		fmt.Printf("Failed to start Go server: %v\n", err)
+		ui.Error(fmt.Sprintf("Failed to start Go server: %v", err))
 		return
 	}
 
 	// Show URLs
+	ui.Step(fmt.Sprintf("cd %s", projectPath))
 	ui.KeyValue("Vite", ui.Highlight("http://localhost:5173"))
 	ui.KeyValue("Velocity", ui.Highlight("http://localhost:4000"))
 

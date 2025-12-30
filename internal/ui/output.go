@@ -2,7 +2,9 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -34,9 +36,9 @@ func Header(command string) {
 	fmt.Printf("\n%s\n\n", primaryStyle.Render(strings.ToUpper(command)))
 }
 
-// Info prints an info message with arrow symbol
+// Info prints an info message with arrow symbol (muted text)
 func Info(message string) {
-	fmt.Printf("%s %s\n", arrowSymbol, successStyle.Render(message))
+	fmt.Printf("%s %s\n", arrowSymbol, mutedStyle.Render(message))
 }
 
 // Success prints a success message with checkmark
@@ -105,7 +107,32 @@ func Task(stepMsg, successMsg string, action func() error) error {
 	if err := action(); err != nil {
 		return err
 	}
-	fmt.Println()
 	Success(successMsg)
 	return nil
+}
+
+// Spinner shows a single dot while action runs, then clears the line
+func Spinner(message string, action func() error) error {
+	done := make(chan bool)
+	var err error
+
+	go func() {
+		err = action()
+		done <- true
+	}()
+
+	ticker := time.NewTicker(300 * time.Millisecond)
+	defer ticker.Stop()
+
+	dots := 0
+	for {
+		select {
+		case <-done:
+			fmt.Fprintf(os.Stdout, "\r\033[K")
+			return err
+		case <-ticker.C:
+			dots = (dots % 3) + 1
+			fmt.Fprintf(os.Stdout, "\r  %s%s", mutedStyle.Render(message), mutedStyle.Render(strings.Repeat(".", dots)))
+		}
+	}
 }
