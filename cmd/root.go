@@ -7,7 +7,7 @@ import (
 	"github.com/velocitykode/velocity-cli/internal/colors"
 )
 
-// Version is the CLI version (single source of truth)
+// Version is the CLI version - single source of truth
 const Version = "0.3.0"
 
 // Remove duplicate root command - it's defined in main.go
