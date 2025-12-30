@@ -7,9 +7,9 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/fatih/color"
 	"github.com/velocitykode/velocity-cli/internal/generator"
 	"github.com/velocitykode/velocity-cli/internal/styles"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
 type step int
@@ -299,21 +299,22 @@ func LaunchNewProjectWizard(projectName string) {
 		fmt.Println() // Add a blank line for spacing
 
 		if err := generator.CreateProject(config); err != nil {
-			fmt.Printf("Error creating project: %v\n", err)
+			ui.Error(fmt.Sprintf("Error creating project: %v", err))
 			return
 		}
 
-		green := color.New(color.FgGreen, color.Bold).SprintFunc()
-		cyan := color.New(color.FgCyan).SprintFunc()
-		white := color.New(color.Bold).SprintFunc()
-
-		fmt.Printf("\n%s\n\n", green("✓ Project created successfully!"))
-		fmt.Printf("%s '%s' %s\n\n", white("Your Velocity project"), cyan(config.Name), white("is ready."))
-		fmt.Printf("%s\n", white("Get started:"))
-		fmt.Printf("  %s %s\n", cyan("cd"), config.Name)
-		fmt.Printf("  %s\n", cyan("npm run dev"))
-		fmt.Printf("  %s\n\n", cyan("go run main.go"))
-		fmt.Printf("%s\n\n", white("Default port: 4000 (set PORT env to change)"))
+		ui.Newline()
+		ui.Success("Project created successfully!")
+		ui.Newline()
+		ui.Bold(fmt.Sprintf("Your Velocity project '%s' is ready.", config.Name))
+		ui.Newline()
+		ui.Bold("Get started:")
+		fmt.Printf("  %s %s\n", ui.Highlight("cd"), config.Name)
+		fmt.Printf("  %s\n", ui.Highlight("npm run dev"))
+		fmt.Printf("  %s\n", ui.Highlight("go run main.go"))
+		ui.Newline()
+		ui.Muted("Default port: 4000 (set PORT env to change)")
+		ui.Newline()
 	}
 }
 
@@ -329,19 +330,20 @@ func CreateProjectWithDefaults(projectName string) {
 	}
 
 	if err := generator.CreateProject(config); err != nil {
-		fmt.Printf("Error creating project: %v\n", err)
+		ui.Error(fmt.Sprintf("Error creating project: %v", err))
 		return
 	}
 
-	green := color.New(color.FgGreen, color.Bold).SprintFunc()
-	cyan := color.New(color.FgCyan).SprintFunc()
-	white := color.New(color.Bold).SprintFunc()
-
-	fmt.Printf("\n%s\n\n", green("✓ Project created successfully!"))
-	fmt.Printf("%s '%s' %s\n\n", white("Your Velocity project"), cyan(projectName), white("is ready."))
-	fmt.Printf("%s\n", white("Get started:"))
-	fmt.Printf("  %s %s\n", cyan("cd"), projectName)
-	fmt.Printf("  %s\n", cyan("npm run dev"))
-	fmt.Printf("  %s\n\n", cyan("go run main.go"))
-	fmt.Printf("%s\n\n", white("Default port: 4000 (set PORT env to change)"))
+	ui.Newline()
+	ui.Success("Project created successfully!")
+	ui.Newline()
+	ui.Bold(fmt.Sprintf("Your Velocity project '%s' is ready.", projectName))
+	ui.Newline()
+	ui.Bold("Get started:")
+	fmt.Printf("  %s %s\n", ui.Highlight("cd"), projectName)
+	fmt.Printf("  %s\n", ui.Highlight("npm run dev"))
+	fmt.Printf("  %s\n", ui.Highlight("go run main.go"))
+	ui.Newline()
+	ui.Muted("Default port: 4000 (set PORT env to change)")
+	ui.Newline()
 }

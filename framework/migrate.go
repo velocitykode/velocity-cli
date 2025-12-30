@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/velocitykode/velocity-cli/internal/colors"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
 // MigrateCmd represents the migrate command
@@ -31,20 +31,17 @@ var MigrateFreshCmd = &cobra.Command{
 }
 
 func runMigrations(fresh bool) {
-	const (
-		colorReset = "\033[0m"
-		colorGreen = "\033[32m"
-	)
+	ui.Header("migrate")
 
 	// Check if we're in a Velocity project
 	if _, err := os.Stat("go.mod"); os.IsNotExist(err) {
-		fmt.Println(colors.ErrorStyle.Render("❌ Not a Go project (go.mod not found)"))
+		ui.Error("Not a Go project (go.mod not found)")
 		os.Exit(1)
 	}
 
 	// Check if database/migrations directory exists
 	if _, err := os.Stat("database/migrations"); os.IsNotExist(err) {
-		fmt.Println(colors.ErrorStyle.Render("❌ Migrations directory not found (database/migrations)"))
+		ui.Error("Migrations directory not found (database/migrations)")
 		os.Exit(1)
 	}
 
@@ -181,7 +178,7 @@ func main() {
 	// Get module name from go.mod
 	moduleName, err := getModuleName()
 	if err != nil {
-		fmt.Println(colors.ErrorStyle.Render(fmt.Sprintf("❌ Failed to read module name: %v", err)))
+		ui.Error(fmt.Sprintf("Failed to read module name: %v", err))
 		os.Exit(1)
 	}
 
@@ -195,16 +192,17 @@ func main() {
 	// Write temporary migration runner
 	tmpFile := fmt.Sprintf("%s/migrate_runner.go", tmpDir)
 	if err := os.WriteFile(tmpFile, []byte(script), 0644); err != nil {
-		fmt.Println(colors.ErrorStyle.Render(fmt.Sprintf("❌ Failed to create migration runner: %v", err)))
+		ui.Error(fmt.Sprintf("Failed to create migration runner: %v", err))
 		os.Exit(1)
 	}
 	defer os.Remove(tmpFile)
 
 	// Build
+	ui.Step("Compiling migration runner...")
 	buildCmd := exec.Command("go", "build", "-o", fmt.Sprintf("%s/migrate", tmpDir), tmpFile)
 	buildOutput, err := buildCmd.CombinedOutput()
 	if err != nil {
-		fmt.Println(colors.ErrorStyle.Render(fmt.Sprintf("❌ Build failed: %v\n%s", err, string(buildOutput))))
+		ui.Error(fmt.Sprintf("Build failed: %v\n%s", err, string(buildOutput)))
 		os.Exit(1)
 	}
 
@@ -219,12 +217,12 @@ func main() {
 	runCmd.Stderr = os.Stderr
 
 	if err := runCmd.Run(); err != nil {
-		fmt.Println(colors.ErrorStyle.Render(fmt.Sprintf("❌ Migration failed: %v", err)))
+		ui.Error(fmt.Sprintf("Migration failed: %v", err))
 		os.Exit(1)
 	}
 
-	fmt.Println()
-	fmt.Printf("%s%s%s %s\n", colorGreen, "[SUCCESS]", colorReset, "Done")
+	ui.Newline()
+	ui.Success("Done")
 }
 
 func getModuleName() (string, error) {

@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/spf13/cobra"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
 var (
@@ -39,7 +40,8 @@ func init() {
 }
 
 func buildApp() {
-	fmt.Println("🔨 Building Velocity application...")
+	ui.Header("build")
+	ui.Step("Building Velocity application...")
 
 	// Prepare build arguments
 	args := []string{"build"}
@@ -50,7 +52,7 @@ func buildApp() {
 	// Optimizations
 	if optimize {
 		args = append(args, "-ldflags", "-s -w")
-		fmt.Println("📦 Building with optimizations...")
+		ui.Step("Building with optimizations...")
 	}
 
 	// Version info
@@ -60,7 +62,7 @@ func buildApp() {
 			ldflags = "-s -w " + ldflags
 		}
 		args = append(args, "-ldflags", ldflags)
-		fmt.Printf("🏷️  Version: %s\n", version)
+		ui.KeyValue("Version", version)
 	}
 
 	// Add the main package
@@ -76,11 +78,11 @@ func buildApp() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	fmt.Printf("Target: %s/%s\n", targetOS, arch)
+	ui.KeyValue("Target", fmt.Sprintf("%s/%s", targetOS, arch))
 
 	// Run the build
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("Build failed: %v\n", err)
+		ui.Error(fmt.Sprintf("Build failed: %v", err))
 		os.Exit(1)
 	}
 
@@ -89,7 +91,7 @@ func buildApp() {
 	if err == nil {
 		size := info.Size()
 		sizeStr := formatBytes(size)
-		fmt.Printf("Built successfully: %s (%s)\n", output, sizeStr)
+		ui.Success(fmt.Sprintf("Built successfully: %s (%s)", output, sizeStr))
 
 		// Make executable on Unix systems
 		if targetOS != "windows" {
@@ -97,14 +99,15 @@ func buildApp() {
 		}
 
 		// Show next steps
-		fmt.Println("\n📋 Next steps:")
-		fmt.Printf("   1. Deploy %s to your server\n", output)
-		fmt.Println("   2. Set environment variables")
-		fmt.Println("   3. Run the binary")
-
-		if targetOS == runtime.GOOS && arch == runtime.GOARCH {
-			fmt.Printf("\n   Test locally: %s\n", output)
+		steps := []string{
+			fmt.Sprintf("Deploy %s to your server", output),
+			"Set environment variables",
+			"Run the binary",
 		}
+		if targetOS == runtime.GOOS && arch == runtime.GOARCH {
+			steps = append(steps, fmt.Sprintf("Test locally: %s", output))
+		}
+		ui.NextSteps(steps)
 	}
 }
 

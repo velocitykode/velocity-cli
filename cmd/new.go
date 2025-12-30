@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/velocitykode/velocity-cli/internal/generator"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
 var (
@@ -31,27 +31,15 @@ var NewCmd = &cobra.Command{
 		}
 
 		if err := generator.CreateProject(config); err != nil {
-			fmt.Printf("\nError creating project: %v\n", err)
+			ui.Error("Error creating project: " + err.Error())
 			return
 		}
 
-		// Show success message
-		const (
-			colorReset = "\033[0m"
-			colorGreen = "\033[32m"
-			colorCyan  = "\033[36m"
-			colorBlue  = "\033[34m"
-			bold       = "\033[1m"
-			underline  = "\033[4m"
-		)
-
-		fmt.Println()
-		fmt.Printf("\n%s  %s\n", bold+underline+colorGreen+"SUCCESS"+colorReset, "Project created successfully!")
-		fmt.Println()
-
-		// Start npm dev server in background
-		fmt.Printf("%s  %s\n\n", bold+underline+colorBlue+"INFO"+colorReset, "Starting development servers")
-		fmt.Println()
+		ui.Newline()
+		ui.Success("Project created successfully!")
+		ui.Newline()
+		ui.Info("Starting development servers")
+		ui.Newline()
 
 		generator.StartDevServers(projectName)
 	},

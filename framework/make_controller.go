@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
 var (
@@ -58,7 +59,7 @@ func generateController(name string) {
 
 	// Create directory
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		fmt.Printf("❌ Failed to create directory: %v\n", err)
+		ui.Error(fmt.Sprintf("Failed to create directory: %v", err))
 		return
 	}
 
@@ -68,14 +69,14 @@ func generateController(name string) {
 
 	// Check if file exists
 	if _, err := os.Stat(filePath); err == nil {
-		fmt.Printf("❌ Controller already exists: %s\n", filePath)
+		ui.Error(fmt.Sprintf("Controller already exists: %s", filePath))
 		return
 	}
 
 	// Create controller file
 	file, err := os.Create(filePath)
 	if err != nil {
-		fmt.Printf("❌ Failed to create file: %v\n", err)
+		ui.Error(fmt.Sprintf("Failed to create file: %v", err))
 		return
 	}
 	defer file.Close()
@@ -91,16 +92,15 @@ func generateController(name string) {
 
 	tmpl := getControllerTemplate()
 	if err := tmpl.Execute(file, data); err != nil {
-		fmt.Printf("❌ Failed to generate controller: %v\n", err)
+		ui.Error(fmt.Sprintf("Failed to generate controller: %v", err))
 		return
 	}
 
-	fmt.Printf("✅ Controller created: %s\n", filePath)
-
-	// Show next steps
-	fmt.Println("\n📋 Next steps:")
-	fmt.Printf("   1. Register routes in routes/web.go or routes/api.go\n")
-	fmt.Printf("   2. Implement controller methods\n")
+	ui.Success(fmt.Sprintf("Controller created: %s", filePath))
+	ui.NextSteps([]string{
+		"Register routes in routes/web.go or routes/api.go",
+		"Implement controller methods",
+	})
 }
 
 func getControllerTemplate() *template.Template {

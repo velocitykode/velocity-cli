@@ -12,7 +12,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
-	"github.com/velocitykode/velocity-cli/internal/colors"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
 var (
@@ -30,14 +30,13 @@ var ServeCmd = &cobra.Command{
 	
 The server will automatically reload when Go files change if --watch is enabled.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println()
-		fmt.Println(colors.BrandStyle.Bold(true).Render("VELOCITY CLI SERVER"))
+		ui.Header("serve")
 		if watch {
-			fmt.Printf("Starting on port %s with hot reload...\n", colors.SuccessStyle.Render(port))
+			ui.Info(fmt.Sprintf("Starting on port %s with hot reload...", ui.Highlight(port)))
 		} else {
-			fmt.Printf("Starting on port %s...\n", colors.SuccessStyle.Render(port))
+			ui.Info(fmt.Sprintf("Starting on port %s...", ui.Highlight(port)))
 		}
-		fmt.Println()
+		ui.Newline()
 
 		if watch {
 			runWithWatcher()
@@ -106,13 +105,13 @@ func runWithWatcher() {
 
 		// Kill existing server if running
 		if serverCmd != nil && serverCmd.Process != nil {
-			fmt.Println("Stopping server...")
+			ui.Step("Stopping server...")
 			serverCmd.Process.Kill()
 			serverCmd.Wait()
 		}
 
 		// Build
-		fmt.Println("Building...")
+		ui.Step("Building...")
 		buildCmd := exec.Command("go", "build", "-o", ".velocity/tmp/server", ".")
 		if buildTags != "" {
 			buildCmd.Args = append(buildCmd.Args[:2], "-tags", buildTags)
@@ -120,12 +119,13 @@ func runWithWatcher() {
 		}
 
 		if output, err := buildCmd.CombinedOutput(); err != nil {
-			fmt.Printf("%s\n%s\n", colors.ErrorStyle.Render("Build failed:"), output)
+			ui.Error("Build failed:")
+			fmt.Printf("%s\n", output)
 			return
 		}
 
 		// Start new server
-		fmt.Printf("%s on port %s...\n", colors.SuccessStyle.Render("Starting server"), port)
+		ui.Success(fmt.Sprintf("Starting server on port %s...", port))
 		serverCmd = exec.Command(".velocity/tmp/server")
 		serverCmd.Stdout = os.Stdout
 		serverCmd.Stderr = os.Stderr
@@ -135,7 +135,7 @@ func runWithWatcher() {
 		)
 
 		if err := serverCmd.Start(); err != nil {
-			fmt.Printf("❌ Failed to start server: %v\n", err)
+			ui.Error(fmt.Sprintf("Failed to start server: %v", err))
 		}
 	}
 
@@ -144,7 +144,8 @@ func runWithWatcher() {
 
 	// Watch for rebuild signals
 	for range rebuild {
-		fmt.Printf("\n%s\n", colors.WarningStyle.Render("File changed, reloading..."))
+		ui.Newline()
+		ui.Warning("File changed, reloading...")
 		time.Sleep(100 * time.Millisecond) // Small delay to batch changes
 		startServer()
 	}
@@ -210,7 +211,7 @@ func watchFiles(rebuild chan bool) {
 			if !ok {
 				return
 			}
-			fmt.Println("Watcher error:", err)
+			ui.Error(fmt.Sprintf("Watcher error: %v", err))
 		}
 	}
 }

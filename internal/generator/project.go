@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fatih/color"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 	"golang.org/x/term"
 )
 
@@ -315,11 +315,6 @@ func createDirectoryStructure(projectPath string) error {
 }
 
 func initGoModule(config ProjectConfig) error {
-	// Color functions
-	cyan := color.New(color.FgCyan).SprintFunc()
-	blue := color.New(color.FgBlue).SprintFunc()
-	yellow := color.New(color.FgYellow).SprintFunc()
-
 	// Change to project directory
 	originalDir, _ := os.Getwd()
 	os.Chdir(config.Name)
@@ -336,7 +331,7 @@ func initGoModule(config ProjectConfig) error {
 		return err
 	}
 
-	fmt.Printf("  %s Configuring dependencies...\n", cyan("↓"))
+	ui.Step("Configuring dependencies...")
 
 	// Check if local Velocity exists and use replace directive
 	velocityPath := "/Users/ali/code/velocity"
@@ -344,34 +339,34 @@ func initGoModule(config ProjectConfig) error {
 		// Add replace directive for local development
 		cmd = exec.Command("go", "mod", "edit", "-replace", "github.com/velocitykode/velocity="+velocityPath)
 		cmd.Run()
-		fmt.Printf("    %s Using local Velocity framework\n", blue("+"))
+		ui.Info("Using local Velocity framework")
 	} else {
 		// Try to get from GitHub (requires GOPRIVATE setup for private repos)
 		cmd = exec.Command("go", "get", "github.com/velocitykode/velocity@v0.0.3")
 		if err := cmd.Run(); err != nil {
-			fmt.Printf("    %s Note: Configure GOPRIVATE for private repo access\n", yellow("!"))
+			ui.Warning("Note: Configure GOPRIVATE for private repo access")
 		}
 	}
 
 	// Add other dependencies based on features
 	if config.Database == "postgres" {
-		fmt.Printf("    %s PostgreSQL driver\n", blue("+"))
+		ui.Info("PostgreSQL driver")
 		exec.Command("go", "get", "github.com/lib/pq").Run()
 	} else if config.Database == "mysql" {
-		fmt.Printf("    %s MySQL driver\n", blue("+"))
+		ui.Info("MySQL driver")
 		exec.Command("go", "get", "github.com/go-sql-driver/mysql").Run()
 	} else if config.Database == "sqlite" {
-		fmt.Printf("    %s SQLite driver\n", blue("+"))
+		ui.Info("SQLite driver")
 		exec.Command("go", "get", "github.com/mattn/go-sqlite3").Run()
 	}
 
 	if config.Cache == "redis" {
-		fmt.Printf("    %s Redis client\n", blue("+"))
+		ui.Info("Redis client")
 		exec.Command("go", "get", "github.com/redis/go-redis/v9").Run()
 	}
 
 	// Run go mod tidy
-	fmt.Printf("  %s Tidying up dependencies...\n", cyan("↓"))
+	ui.Step("Tidying up dependencies...")
 	exec.Command("go", "mod", "tidy").Run()
 
 	return nil
@@ -388,37 +383,33 @@ func initGitRepo(projectPath string) {
 
 // InitProject adds Velocity structure to an existing Go project
 func InitProject(config ProjectConfig, targetDir string) error {
-	// Color functions
-	green := color.New(color.FgGreen).SprintFunc()
-	yellow := color.New(color.FgYellow).SprintFunc()
-
-	fmt.Printf("%s Setting up Velocity structure...\n", yellow(">"))
+	ui.Step("Setting up Velocity structure...")
 	// Create directory structure in existing directory
 	if err := createDirectoryStructure(targetDir); err != nil {
 		return fmt.Errorf("failed to create directory structure: %w", err)
 	}
-	fmt.Printf("%s Velocity structure created\n", green("✓"))
+	ui.Success("Velocity structure created")
 
-	fmt.Printf("%s Generating application files...\n", yellow(">"))
+	ui.Step("Generating application files...")
 	// Generate files from stubs (skip if exists to preserve existing code)
 	if err := generateFilesFromStubs(config); err != nil {
 		return fmt.Errorf("failed to generate files: %w", err)
 	}
-	fmt.Printf("%s Application files generated\n", green("✓"))
+	ui.Success("Application files generated")
 
-	fmt.Printf("%s Creating configuration files...\n", yellow(">"))
+	ui.Step("Creating configuration files...")
 	// Generate config files if they don't exist
 	if err := generateProjectFiles(config); err != nil {
 		return fmt.Errorf("failed to generate project files: %w", err)
 	}
-	fmt.Printf("%s Configuration files created\n", green("✓"))
+	ui.Success("Configuration files created")
 
-	fmt.Printf("%s Adding Velocity dependencies...\n", yellow(">"))
+	ui.Step("Adding Velocity dependencies...")
 	// Add dependencies to existing go.mod
 	if err := addVelocityDependencies(config, targetDir); err != nil {
 		return fmt.Errorf("failed to add dependencies: %w", err)
 	}
-	fmt.Printf("%s Dependencies added\n", green("✓"))
+	ui.Success("Dependencies added")
 
 	return nil
 }
@@ -810,17 +801,12 @@ func setupTemplatesAndHotReload(projectPath string) error {
 }
 
 func addVelocityDependencies(config ProjectConfig, projectPath string) error {
-	// Color functions
-	cyan := color.New(color.FgCyan).SprintFunc()
-	blue := color.New(color.FgBlue).SprintFunc()
-	yellow := color.New(color.FgYellow).SprintFunc()
-
 	// Change to project directory
 	originalDir, _ := os.Getwd()
 	os.Chdir(projectPath)
 	defer os.Chdir(originalDir)
 
-	fmt.Printf("  %s Configuring dependencies...\n", cyan("↓"))
+	ui.Step("Configuring dependencies...")
 
 	// Check if local Velocity exists and use replace directive
 	velocityPath := "/Users/ali/code/velocity"
@@ -828,34 +814,34 @@ func addVelocityDependencies(config ProjectConfig, projectPath string) error {
 		// Add replace directive for local development
 		cmd := exec.Command("go", "mod", "edit", "-replace", "github.com/velocitykode/velocity="+velocityPath)
 		cmd.Run()
-		fmt.Printf("    %s Using local Velocity framework\n", blue("+"))
+		ui.Info("Using local Velocity framework")
 	} else {
 		// Try to get from GitHub
 		cmd := exec.Command("go", "get", "github.com/velocitykode/velocity")
 		if err := cmd.Run(); err != nil {
-			fmt.Printf("    %s Note: Configure GOPRIVATE for private repo access\n", yellow("!"))
+			ui.Warning("Note: Configure GOPRIVATE for private repo access")
 		}
 	}
 
 	// Add other dependencies based on features
 	if config.Database == "postgres" {
-		fmt.Printf("    %s PostgreSQL driver\n", blue("+"))
+		ui.Info("PostgreSQL driver")
 		exec.Command("go", "get", "github.com/lib/pq").Run()
 	} else if config.Database == "mysql" {
-		fmt.Printf("    %s MySQL driver\n", blue("+"))
+		ui.Info("MySQL driver")
 		exec.Command("go", "get", "github.com/go-sql-driver/mysql").Run()
 	} else if config.Database == "sqlite" {
-		fmt.Printf("    %s SQLite driver\n", blue("+"))
+		ui.Info("SQLite driver")
 		exec.Command("go", "get", "github.com/mattn/go-sqlite3").Run()
 	}
 
 	if config.Cache == "redis" {
-		fmt.Printf("    %s Redis client\n", blue("+"))
+		ui.Info("Redis client")
 		exec.Command("go", "get", "github.com/redis/go-redis/v9").Run()
 	}
 
 	// Run go mod tidy
-	fmt.Printf("  %s Tidying up dependencies...\n", cyan("↓"))
+	ui.Step("Tidying up dependencies...")
 	exec.Command("go", "mod", "tidy").Run()
 
 	return nil

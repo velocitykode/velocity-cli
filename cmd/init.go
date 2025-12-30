@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/velocitykode/velocity-cli/internal/config"
 	"github.com/velocitykode/velocity-cli/internal/detector"
 	"github.com/velocitykode/velocity-cli/internal/generator"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
 var (
@@ -35,10 +35,7 @@ func init() {
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
-	// Color functions
-	green := color.New(color.FgGreen).SprintFunc()
-	cyan := color.New(color.FgCyan).SprintFunc()
-	red := color.New(color.FgRed).SprintFunc()
+	ui.Header("init")
 
 	// Get current working directory
 	cwd, err := os.Getwd()
@@ -47,17 +44,17 @@ func runInit(cmd *cobra.Command, args []string) error {
 	}
 
 	// Detect project
-	fmt.Printf("%s Detecting Go project...\n", cyan("→"))
+	ui.Info("Detecting Go project...")
 	info, err := detector.Detect(cwd)
 	if err != nil {
-		return fmt.Errorf("%s %v\n\nThis directory does not contain a go.mod file.\nInitialize a Go module first:\n  go mod init github.com/yourname/project\n\nThen run 'velocity init' again.", red("✗"), err)
+		return fmt.Errorf("not a Go project\n\nThis directory does not contain a go.mod file.\nInitialize a Go module first:\n  go mod init github.com/yourname/project\n\nThen run 'velocity init' again.")
 	}
 
 	if info.HasVelocity {
-		return fmt.Errorf("%s Velocity already initialized\n\nThis project already has Velocity structure (app/, config/, routes/).\n\nIf you want to create a new project, use:\n  velocity new project-name", red("✗"))
+		return fmt.Errorf("Velocity already initialized\n\nThis project already has Velocity structure (app/, config/, routes/).\n\nIf you want to create a new project, use:\n  velocity new project-name")
 	}
 
-	fmt.Printf("%s Detected Go project: %s\n", green("✓"), info.ModuleName)
+	ui.Success(fmt.Sprintf("Detected Go project: %s", info.ModuleName))
 
 	// Load config defaults
 	cfg, _ := config.Load()
@@ -99,17 +96,16 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	// Initialize project
 	if err := generator.InitProject(projectCfg, cwd); err != nil {
-		return fmt.Errorf("%s Failed to initialize: %w", red("✗"), err)
+		return fmt.Errorf("failed to initialize: %w", err)
 	}
 
 	// Success message
-	fmt.Println()
-	fmt.Printf("%s\n", green("✓ Velocity initialized successfully!"))
-	fmt.Println()
-	fmt.Printf("%s\n", color.New(color.Bold).Sprint("Next steps:"))
-	fmt.Printf("  %s\n", cyan("go mod download"))
-	fmt.Printf("  %s\n", cyan("go run main.go serve"))
-	fmt.Println()
+	ui.Newline()
+	ui.Success("Velocity initialized successfully!")
+	ui.NextSteps([]string{
+		"go mod download",
+		"go run main.go serve",
+	})
 
 	return nil
 }

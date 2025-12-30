@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/velocitykode/velocity-cli/internal/config"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
 var ConfigCmd = &cobra.Command{
@@ -87,11 +87,10 @@ func runConfigSet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to save config: %w", err)
 	}
 
-	green := color.New(color.FgGreen).SprintFunc()
-	fmt.Printf("%s Set %s = %s\n", green("✓"), key, value)
+	ui.Success(fmt.Sprintf("Set %s = %s", key, value))
 
 	path, _ := config.ConfigPath()
-	fmt.Printf("Configuration saved to %s\n", path)
+	ui.Muted(fmt.Sprintf("Configuration saved to %s", path))
 
 	return nil
 }
@@ -175,9 +174,8 @@ func runConfigReset(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to reset config: %w", err)
 	}
 
-	green := color.New(color.FgGreen).SprintFunc()
-	fmt.Printf("%s Configuration reset\n", green("✓"))
-	fmt.Printf("Deleted %s\n", path)
+	ui.Success("Configuration reset")
+	ui.Muted(fmt.Sprintf("Deleted %s", path))
 
 	return nil
 }
