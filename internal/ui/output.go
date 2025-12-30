@@ -2,8 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"os"
-	"time"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -16,44 +15,46 @@ var (
 	errorColor   = lipgloss.Color("#ef4444")
 	mutedColor   = lipgloss.Color("#6b7280")
 
-	// Label styles
-	labelStyle   = lipgloss.NewStyle().Bold(true).Padding(0, 1)
-	infoLabel    = labelStyle.Background(primaryColor).Foreground(lipgloss.Color("#ffffff")).Render("INFO")
-	successLabel = labelStyle.Background(successColor).Foreground(lipgloss.Color("#ffffff")).Render("SUCCESS")
-	warningLabel = labelStyle.Background(warningColor).Foreground(lipgloss.Color("#000000")).Render("WARNING")
-	errorLabel   = labelStyle.Background(errorColor).Foreground(lipgloss.Color("#ffffff")).Render("ERROR")
+	// Symbols
+	arrowSymbol = lipgloss.NewStyle().Foreground(primaryColor).Bold(true).Render("→")
+	checkSymbol = lipgloss.NewStyle().Foreground(successColor).Render("✓")
+	warnSymbol  = lipgloss.NewStyle().Foreground(warningColor).Render("!")
+	crossSymbol = lipgloss.NewStyle().Foreground(errorColor).Render("✗")
 
 	// Text styles
 	mutedStyle   = lipgloss.NewStyle().Foreground(mutedColor)
 	primaryStyle = lipgloss.NewStyle().Foreground(primaryColor).Bold(true)
+	successStyle = lipgloss.NewStyle().Foreground(successColor).Bold(true)
+	warningStyle = lipgloss.NewStyle().Foreground(warningColor).Bold(true)
+	errorStyle   = lipgloss.NewStyle().Foreground(errorColor).Bold(true)
 )
 
-// Header prints a styled command header
+// Header prints a styled command header (uppercase cyan)
 func Header(command string) {
-	fmt.Printf("%s %s\n", infoLabel, command)
+	fmt.Printf("\n%s\n\n", primaryStyle.Render(strings.ToUpper(command)))
 }
 
-// Info prints an info message with label
+// Info prints an info message with arrow symbol
 func Info(message string) {
-	fmt.Printf("%s %s\n", infoLabel, message)
+	fmt.Printf("%s %s\n", arrowSymbol, successStyle.Render(message))
 }
 
-// Success prints a success message with label
+// Success prints a success message with checkmark
 func Success(message string) {
-	fmt.Printf("%s %s\n", successLabel, message)
+	fmt.Printf("%s %s\n", checkSymbol, successStyle.Render(message))
 }
 
-// Warning prints a warning message with label
+// Warning prints a warning message
 func Warning(message string) {
-	fmt.Printf("%s %s\n", warningLabel, message)
+	fmt.Printf("%s %s\n", warnSymbol, warningStyle.Render(message))
 }
 
-// Error prints an error message with label
+// Error prints an error message
 func Error(message string) {
-	fmt.Printf("%s %s\n", errorLabel, message)
+	fmt.Printf("%s %s\n", crossSymbol, errorStyle.Render(message))
 }
 
-// Step prints a muted step message (no label)
+// Step prints a muted step message (indented)
 func Step(message string) {
 	fmt.Printf("  %s\n", mutedStyle.Render(message))
 }
@@ -97,42 +98,14 @@ func NextSteps(steps []string) {
 	}
 }
 
-// Loader shows a bouncing dot animation while action runs
-func Loader(message string, action func() error) error {
-	done := make(chan bool)
-	var err error
-
-	// Run action in goroutine
-	go func() {
-		err = action()
-		done <- true
-	}()
-
-	// Animation frames: dot bouncing left to right
-	frames := []string{
-		"●    ",
-		" ●   ",
-		"  ●  ",
-		"   ● ",
-		"    ●",
-		"   ● ",
-		"  ●  ",
-		" ●   ",
+// Task runs an action with step message, then shows success/error
+func Task(stepMsg, successMsg string, action func() error) error {
+	Info(stepMsg)
+	fmt.Printf("  %s\n", mutedStyle.Render(stepMsg+"..."))
+	if err := action(); err != nil {
+		return err
 	}
-
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
-
-	i := 0
-	for {
-		select {
-		case <-done:
-			// Clear the loader line
-			fmt.Fprintf(os.Stdout, "\r%s\r", "          ")
-			return err
-		case <-ticker.C:
-			fmt.Fprintf(os.Stdout, "\r%s %s", mutedStyle.Render(frames[i]), message)
-			i = (i + 1) % len(frames)
-		}
-	}
+	fmt.Println()
+	Success(successMsg)
+	return nil
 }

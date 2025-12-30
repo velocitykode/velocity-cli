@@ -19,6 +19,7 @@ var NewCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		projectName := args[0]
+		ui.Header("velocity new")
 
 		// Create project with flags (defaults to sqlite if not specified)
 		config := generator.ProjectConfig{
@@ -31,7 +32,8 @@ var NewCmd = &cobra.Command{
 		}
 
 		if err := generator.CreateProject(config); err != nil {
-			ui.Error("Error creating project: " + err.Error())
+			ui.Newline()
+			ui.Error(err.Error())
 			return
 		}
 
@@ -39,7 +41,6 @@ var NewCmd = &cobra.Command{
 		ui.Success("Project created successfully!")
 		ui.Newline()
 		ui.Info("Starting development servers")
-		ui.Newline()
 
 		generator.StartDevServers(projectName)
 	},

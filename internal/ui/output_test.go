@@ -25,16 +25,16 @@ func TestCommand(t *testing.T) {
 	}
 }
 
-func TestLoader(t *testing.T) {
+func TestTask(t *testing.T) {
 	called := false
-	err := Loader("Testing...", func() error {
+	err := Task("Testing step", "Test complete", func() error {
 		called = true
 		return nil
 	})
 	if err != nil {
-		t.Errorf("Loader should return nil for successful action, got: %v", err)
+		t.Errorf("Task should return nil for successful action, got: %v", err)
 	}
 	if !called {
-		t.Error("Loader action was not called")
+		t.Error("Task action was not called")
 	}
 }

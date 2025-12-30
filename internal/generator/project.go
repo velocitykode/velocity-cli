@@ -37,68 +37,68 @@ func CreateProject(config ProjectConfig) error {
 	}
 
 	ui.Info("Creating new Velocity project")
+	ui.Step("Cloning project template...")
 
 	// Clone template
-	if err := ui.Loader("Cloning template...", func() error {
-		return cloneTemplate(config.Name)
-	}); err != nil {
+	if err := cloneTemplate(config.Name); err != nil {
 		return fmt.Errorf("failed to clone template: %w", err)
 	}
+	ui.Newline()
 	ui.Success("Template cloned")
+	ui.Step("Configuring project module...")
 
 	// Replace module name in all files
-	if err := ui.Loader("Configuring module...", func() error {
-		return replaceModuleName(config.Name, moduleName)
-	}); err != nil {
+	if err := replaceModuleName(config.Name, moduleName); err != nil {
 		return fmt.Errorf("failed to configure project: %w", err)
 	}
+	ui.Newline()
 	ui.Success("Module configured")
+	ui.Step("Initializing Git repository...")
 
 	// Remove template git history and initialize new repo
-	if err := ui.Loader("Initializing Git...", func() error {
-		return reinitGitRepo(config.Name)
-	}); err != nil {
+	if err := reinitGitRepo(config.Name); err != nil {
 		return fmt.Errorf("failed to initialize git: %w", err)
 	}
+	ui.Newline()
 	ui.Success("Git initialized")
+	ui.Step("Creating default migrations...")
 
 	// Create default migrations
-	if err := ui.Loader("Creating migrations...", func() error {
-		return createDefaultMigrations(config.Name)
-	}); err != nil {
+	if err := createDefaultMigrations(config.Name); err != nil {
 		return fmt.Errorf("failed to create migrations: %w", err)
 	}
+	ui.Newline()
 	ui.Success("Migrations created")
+	ui.Step("Setting up environment files...")
 
 	// Create proper .env.example with database config
-	if err := ui.Loader("Setting up environment...", func() error {
-		return createEnvFiles(config)
-	}); err != nil {
+	if err := createEnvFiles(config); err != nil {
 		return fmt.Errorf("failed to create env files: %w", err)
 	}
+	ui.Newline()
 	ui.Success("Environment configured")
+	ui.Step("Configuring hot reload...")
 
 	// Setup hot reload
-	if err := ui.Loader("Configuring hot reload...", func() error {
-		return setupTemplatesAndHotReload(config.Name)
-	}); err != nil {
+	if err := setupTemplatesAndHotReload(config.Name); err != nil {
 		return fmt.Errorf("failed to setup templates: %w", err)
 	}
-	ui.Success("Hot reload ready")
+	ui.Newline()
+	ui.Success("Hot reload configured")
+	ui.Step("Installing dependencies...")
 
 	// Install dependencies
-	if err := ui.Loader("Installing dependencies...", func() error {
-		return installDependencies(config.Name)
-	}); err == nil {
+	if err := installDependencies(config.Name); err == nil {
+		ui.Newline()
 		ui.Success("Dependencies installed")
 	}
+	ui.Step("Running migrations...")
 
 	// Run migrations
-	if err := ui.Loader("Running migrations...", func() error {
-		return runMigrations(config.Name)
-	}); err != nil {
+	if err := runMigrations(config.Name); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
+	ui.Newline()
 	ui.Success("Database ready")
 
 	return nil
@@ -559,25 +559,25 @@ import (
 )
 
 const (
-	// ANSI codes for SUCCESS label (green bg, white text, bold)
-	successLabel = "\033[1;42;37m SUCCESS \033[0m"
-	warningLabel = "\033[1;43;30m WARNING \033[0m"
-	errorLabel   = "\033[1;41;37m ERROR \033[0m"
+	// ANSI symbols (matching CLI style)
+	checkSymbol = "\033[32m✓\033[0m"   // green checkmark
+	warnSymbol  = "\033[33m!\033[0m"   // yellow warning
+	crossSymbol = "\033[31m✗\033[0m"   // red cross
 )
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		fmt.Printf("%%s .env file not found\n", warningLabel)
+		fmt.Printf("%%s .env file not found\n", warnSymbol)
 	}
 
 	if err := orm.InitFromEnv(); err != nil {
-		fmt.Printf("%%s Failed to initialize database: %%v\n", errorLabel, err)
+		fmt.Printf("%%s Failed to initialize database: %%v\n", crossSymbol, err)
 		os.Exit(1)
 	}
 
 	driver := orm.DB()
 	if driver == nil {
-		fmt.Printf("%%s Database driver not initialized\n", errorLabel)
+		fmt.Printf("%%s Database driver not initialized\n", crossSymbol)
 		os.Exit(1)
 	}
 
@@ -610,12 +610,12 @@ func main() {
 	}
 
 	if err := migrator.Up(); err != nil {
-		fmt.Printf("%%s Migration failed: %%v\n", errorLabel, err)
+		fmt.Printf("%%s Migration failed: %%v\n", crossSymbol, err)
 		os.Exit(1)
 	}
 
 	for _, m := range pending {
-		fmt.Printf("%%s %%s_%%s\n", successLabel, m.Version, m.Description)
+		fmt.Printf("%%s \033[32;1m%%s_%%s\033[0m\n", checkSymbol, m.Version, m.Description)
 	}
 }
 `, moduleName)
