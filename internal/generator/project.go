@@ -9,10 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/velocitykode/velocity-cli/internal/ui"
-	"golang.org/x/term"
 )
 
 // ProjectConfig holds the configuration for a new project
@@ -27,46 +25,6 @@ type ProjectConfig struct {
 
 // CreateProject generates a new Velocity project from template
 func CreateProject(config ProjectConfig) error {
-	const (
-		colorReset = "\033[0m"
-		colorGreen = "\033[32m"
-		colorBlue  = "\033[34m"
-		colorWhite = "\033[37m"
-		bold       = "\033[1m"
-		underline  = "\033[4m"
-	)
-
-	formatLine := func(text string, duration time.Duration) string {
-		status := colorGreen + "DONE" + colorReset
-
-		// Format timing: use seconds if >= 1000ms, otherwise milliseconds
-		var timing string
-		ms := float64(duration.Microseconds()) / 1000.0
-		if ms >= 1000.0 {
-			timing = fmt.Sprintf("%.2fs", ms/1000.0)
-		} else {
-			timing = fmt.Sprintf("%.2fms", ms)
-		}
-
-		// Get terminal width, default to 120 if not available
-		termWidth := 120
-		if width, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil {
-			termWidth = width
-		}
-
-		// Calculate dots: terminal width - text - timing - status - spacing
-		dotsNeeded := termWidth - len(text) - len(timing) - 6 - 10 // 6 for " DONE", 10 for spacing/padding
-		if dotsNeeded < 3 {
-			dotsNeeded = 3
-		}
-		dots := colorWhite + strings.Repeat(".", dotsNeeded) + colorReset
-		return fmt.Sprintf("%s %s %s %s", text, dots, timing, status)
-	}
-
-	printInfo := func(message string) {
-		fmt.Printf("\n%s  %s\n\n", bold+underline+colorBlue+"INFO"+colorReset, message)
-	}
-
 	// Validate project name
 	if err := validateProjectName(config.Name); err != nil {
 		return err
@@ -78,68 +36,69 @@ func CreateProject(config ProjectConfig) error {
 		moduleName = config.Name
 	}
 
-	printInfo("Creating new Velocity project.")
+	ui.Header("new")
+	ui.Info("Creating new Velocity project")
 
 	// Clone template
-	duration, err := runStep("Cloning project template", func() error {
+	ui.Step("Cloning project template...")
+	if _, err := runStep("Cloning project template", func() error {
 		return cloneTemplate(config.Name)
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("failed to clone template: %w", err)
 	}
-	fmt.Println(formatLine("Cloning project template", duration))
+	ui.Success("Template cloned")
 
 	// Replace module name in all files
-	duration, err = runStep("Configuring project module", func() error {
+	ui.Step("Configuring project module...")
+	if _, err := runStep("Configuring project module", func() error {
 		return replaceModuleName(config.Name, moduleName)
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("failed to configure project: %w", err)
 	}
-	fmt.Println(formatLine("Configuring project module", duration))
+	ui.Success("Module configured")
 
 	// Remove template git history and initialize new repo
-	duration, err = runStep("Initializing Git repository", func() error {
+	ui.Step("Initializing Git repository...")
+	if _, err := runStep("Initializing Git repository", func() error {
 		return reinitGitRepo(config.Name)
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("failed to initialize git: %w", err)
 	}
-	fmt.Println(formatLine("Initializing Git repository", duration))
+	ui.Success("Git initialized")
 
 	// Create default migrations
-	duration, err = runStep("Creating default migrations", func() error {
+	ui.Step("Creating default migrations...")
+	if _, err := runStep("Creating default migrations", func() error {
 		return createDefaultMigrations(config.Name)
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("failed to create migrations: %w", err)
 	}
-	fmt.Println(formatLine("Creating default migrations", duration))
+	ui.Success("Migrations created")
 
 	// Create proper .env.example with database config
-	duration, err = runStep("Setting up environment files", func() error {
+	ui.Step("Setting up environment files...")
+	if _, err := runStep("Setting up environment files", func() error {
 		return createEnvFiles(config)
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("failed to create env files: %w", err)
 	}
-	fmt.Println(formatLine("Setting up environment files", duration))
+	ui.Success("Environment configured")
 
 	// Setup hot reload
-	duration, err = runStep("Configuring hot reload", func() error {
+	ui.Step("Configuring hot reload...")
+	if _, err := runStep("Configuring hot reload", func() error {
 		return setupTemplatesAndHotReload(config.Name)
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("failed to setup templates: %w", err)
 	}
-	fmt.Println(formatLine("Configuring hot reload", duration))
+	ui.Success("Hot reload configured")
 
 	// Install dependencies
-	duration, err = runStep("Installing dependencies", func() error {
+	ui.Step("Installing dependencies...")
+	if _, err := runStep("Installing dependencies", func() error {
 		return installDependencies(config.Name)
-	})
-	if err == nil {
-		fmt.Println(formatLine("Installing dependencies", duration))
+	}); err == nil {
+		ui.Success("Dependencies installed")
 	}
 
 	// Run migrations
@@ -572,15 +531,6 @@ func init() {
 
 // runMigrations runs migrations directly without subprocess
 func runMigrations(projectPath string) error {
-	const (
-		colorReset = "\033[0m"
-		colorBlue  = "\033[34m"
-		colorGreen = "\033[32m"
-		colorWhite = "\033[37m"
-		bold       = "\033[1m"
-		underline  = "\033[4m"
-	)
-
 	absPath, err := filepath.Abs(projectPath)
 	if err != nil {
 		return err
@@ -590,7 +540,7 @@ func runMigrations(projectPath string) error {
 	os.Chdir(absPath)
 	defer os.Chdir(originalDir)
 
-	fmt.Printf("\n%s  %s\n\n", bold+underline+colorBlue+"INFO"+colorReset, "Preparing database.")
+	ui.Step("Preparing database...")
 
 	// Create temporary migration runner script
 	tmpDir := ".velocity/tmp"
@@ -608,8 +558,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
-	"time"
 
 	_ "%s/database/migrations"
 	"github.com/joho/godotenv"
@@ -618,62 +566,28 @@ import (
 )
 
 const (
-	colorReset = "\033[0m"
-	colorGreen = "\033[32m"
-	colorBlue  = "\033[34m"
-	colorWhite = "\033[37m"
-	bold       = "\033[1m"
-	underline  = "\033[4m"
+	green = "\033[32m"
+	reset = "\033[0m"
 )
-
-func formatLine(text string, duration time.Duration) string {
-	status := colorGreen + "DONE" + colorReset
-
-	// Format timing: use seconds if >= 1000ms, otherwise milliseconds
-	var timing string
-	ms := float64(duration.Microseconds()) / 1000.0
-	if ms >= 1000.0 {
-		timing = fmt.Sprintf("%%.2fs", ms/1000.0)
-	} else {
-		timing = fmt.Sprintf("%%.2fms", ms)
-	}
-
-	// Fixed width for migrations
-	termWidth := 120
-
-	// Calculate dots: terminal width - text - timing - status - spacing
-	dotsNeeded := termWidth - len(text) - len(timing) - 6 - 10 // 6 for " DONE", 10 for spacing/padding
-	if dotsNeeded < 3 {
-		dotsNeeded = 3
-	}
-	dots := colorWhite + strings.Repeat(".", dotsNeeded) + colorReset
-	return fmt.Sprintf("%%s %%s %%s %%s", text, dots, timing, status)
-}
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		fmt.Println("Warning: .env file not found")
+		fmt.Println("  Warning: .env file not found")
 	}
 
 	if err := orm.InitFromEnv(); err != nil {
-		fmt.Printf("Failed to initialize database: %%v\n", err)
+		fmt.Printf("  Failed to initialize database: %%v\n", err)
 		os.Exit(1)
 	}
 
 	driver := orm.DB()
 	if driver == nil {
-		fmt.Println("Database driver not initialized")
+		fmt.Println("  Database driver not initialized")
 		os.Exit(1)
 	}
 
 	driverName := os.Getenv("DB_CONNECTION")
 	migrator := migrate.NewMigrator(driver, driverName)
-
-	start := time.Now()
-	// Create migrations table (this is done by migrator.Up() internally)
-	fmt.Println(formatLine("Creating migration table", time.Since(start)))
-
-	fmt.Printf("\n%%s  %%s\n\n", bold+underline+colorBlue+"INFO"+colorReset, "Running migrations.")
 
 	registry := migrate.All()
 
@@ -700,20 +614,13 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Track timing for each migration
-	migrationStart := time.Now()
 	if err := migrator.Up(); err != nil {
-		fmt.Printf("\nMigration failed: %%v\n", err)
+		fmt.Printf("  Migration failed: %%v\n", err)
 		os.Exit(1)
 	}
-	totalDuration := time.Since(migrationStart)
-
-	// Estimate timing per migration (divide total by count)
-	perMigration := totalDuration / time.Duration(len(pending))
 
 	for _, m := range pending {
-		text := fmt.Sprintf("%%s_%%s", m.Version, m.Description)
-		fmt.Println(formatLine(text, perMigration))
+		fmt.Printf("  %%s%%s%%s %%s_%%s\n", green, "✓", reset, m.Version, m.Description)
 	}
 }
 `, moduleName)
@@ -789,10 +696,12 @@ func StartDevServers(projectPath string) {
 	}
 
 	// Show URLs
-	fmt.Printf("  Vite: %shttp://localhost:5173%s\n", colorCyan, colorReset)
-	fmt.Printf("  Velocity: %shttp://localhost:4000%s\n", colorCyan, colorReset)
+	ui.KeyValue("Vite", ui.Highlight("http://localhost:5173"))
+	ui.KeyValue("Velocity", ui.Highlight("http://localhost:4000"))
 
-	fmt.Printf("\n\n%sBuild something great!%s\n", colorGreen, colorReset)
+	ui.Newline()
+	ui.Success("Build something great!")
+	ui.Newline()
 }
 
 func setupTemplatesAndHotReload(projectPath string) error {
