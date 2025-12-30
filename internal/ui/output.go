@@ -16,20 +16,20 @@ var (
 	mutedColor   = lipgloss.Color("#6b7280")
 
 	// Label styles
-	infoLabel    = lipgloss.NewStyle().Background(primaryColor).Foreground(lipgloss.Color("#ffffff")).Bold(true).Padding(0, 1).Render("INFO")
-	successLabel = lipgloss.NewStyle().Background(successColor).Foreground(lipgloss.Color("#ffffff")).Bold(true).Padding(0, 1).Render("SUCCESS")
-	warningLabel = lipgloss.NewStyle().Background(warningColor).Foreground(lipgloss.Color("#000000")).Bold(true).Padding(0, 1).Render("WARNING")
-	errorLabel   = lipgloss.NewStyle().Background(errorColor).Foreground(lipgloss.Color("#ffffff")).Bold(true).Padding(0, 1).Render("ERROR")
+	labelStyle   = lipgloss.NewStyle().Bold(true).Padding(0, 1)
+	infoLabel    = labelStyle.Background(primaryColor).Foreground(lipgloss.Color("#ffffff")).Render("INFO")
+	successLabel = labelStyle.Background(successColor).Foreground(lipgloss.Color("#ffffff")).Render("SUCCESS")
+	warningLabel = labelStyle.Background(warningColor).Foreground(lipgloss.Color("#000000")).Render("WARNING")
+	errorLabel   = labelStyle.Background(errorColor).Foreground(lipgloss.Color("#ffffff")).Render("ERROR")
 
 	// Text styles
 	mutedStyle   = lipgloss.NewStyle().Foreground(mutedColor)
 	primaryStyle = lipgloss.NewStyle().Foreground(primaryColor).Bold(true)
-	successStyle = lipgloss.NewStyle().Foreground(successColor)
 )
 
 // Header prints a styled command header
 func Header(command string) {
-	fmt.Printf("\n%s %s\n\n", infoLabel, command)
+	fmt.Printf("%s %s\n", infoLabel, command)
 }
 
 // Info prints an info message with label

@@ -559,23 +559,25 @@ import (
 )
 
 const (
-	green = "\033[32m"
-	reset = "\033[0m"
+	// ANSI codes for SUCCESS label (green bg, white text, bold)
+	successLabel = "\033[1;42;37m SUCCESS \033[0m"
+	warningLabel = "\033[1;43;30m WARNING \033[0m"
+	errorLabel   = "\033[1;41;37m ERROR \033[0m"
 )
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		fmt.Println("  Warning: .env file not found")
+		fmt.Printf("%%s .env file not found\n", warningLabel)
 	}
 
 	if err := orm.InitFromEnv(); err != nil {
-		fmt.Printf("  Failed to initialize database: %%v\n", err)
+		fmt.Printf("%%s Failed to initialize database: %%v\n", errorLabel, err)
 		os.Exit(1)
 	}
 
 	driver := orm.DB()
 	if driver == nil {
-		fmt.Println("  Database driver not initialized")
+		fmt.Printf("%%s Database driver not initialized\n", errorLabel)
 		os.Exit(1)
 	}
 
@@ -608,12 +610,12 @@ func main() {
 	}
 
 	if err := migrator.Up(); err != nil {
-		fmt.Printf("  Migration failed: %%v\n", err)
+		fmt.Printf("%%s Migration failed: %%v\n", errorLabel, err)
 		os.Exit(1)
 	}
 
 	for _, m := range pending {
-		fmt.Printf("  %%s%%s%%s %%s_%%s\n", green, "✓", reset, m.Version, m.Description)
+		fmt.Printf("%%s %%s_%%s\n", successLabel, m.Version, m.Description)
 	}
 }
 `, moduleName)
