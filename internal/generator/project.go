@@ -36,12 +36,10 @@ func CreateProject(config ProjectConfig) error {
 		moduleName = config.Name
 	}
 
-	ui.Header("new")
 	ui.Info("Creating new Velocity project")
 
 	// Clone template
-	ui.Step("Cloning project template...")
-	if _, err := runStep("Cloning project template", func() error {
+	if err := ui.SpinnerWithError("Cloning template...", func() error {
 		return cloneTemplate(config.Name)
 	}); err != nil {
 		return fmt.Errorf("failed to clone template: %w", err)
@@ -49,8 +47,7 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Template cloned")
 
 	// Replace module name in all files
-	ui.Step("Configuring project module...")
-	if _, err := runStep("Configuring project module", func() error {
+	if err := ui.SpinnerWithError("Configuring module...", func() error {
 		return replaceModuleName(config.Name, moduleName)
 	}); err != nil {
 		return fmt.Errorf("failed to configure project: %w", err)
@@ -58,8 +55,7 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Module configured")
 
 	// Remove template git history and initialize new repo
-	ui.Step("Initializing Git repository...")
-	if _, err := runStep("Initializing Git repository", func() error {
+	if err := ui.SpinnerWithError("Initializing Git...", func() error {
 		return reinitGitRepo(config.Name)
 	}); err != nil {
 		return fmt.Errorf("failed to initialize git: %w", err)
@@ -67,8 +63,7 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Git initialized")
 
 	// Create default migrations
-	ui.Step("Creating default migrations...")
-	if _, err := runStep("Creating default migrations", func() error {
+	if err := ui.SpinnerWithError("Creating migrations...", func() error {
 		return createDefaultMigrations(config.Name)
 	}); err != nil {
 		return fmt.Errorf("failed to create migrations: %w", err)
@@ -76,8 +71,7 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Migrations created")
 
 	// Create proper .env.example with database config
-	ui.Step("Setting up environment files...")
-	if _, err := runStep("Setting up environment files", func() error {
+	if err := ui.SpinnerWithError("Setting up environment...", func() error {
 		return createEnvFiles(config)
 	}); err != nil {
 		return fmt.Errorf("failed to create env files: %w", err)
@@ -85,26 +79,27 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Environment configured")
 
 	// Setup hot reload
-	ui.Step("Configuring hot reload...")
-	if _, err := runStep("Configuring hot reload", func() error {
+	if err := ui.SpinnerWithError("Configuring hot reload...", func() error {
 		return setupTemplatesAndHotReload(config.Name)
 	}); err != nil {
 		return fmt.Errorf("failed to setup templates: %w", err)
 	}
-	ui.Success("Hot reload configured")
+	ui.Success("Hot reload ready")
 
 	// Install dependencies
-	ui.Step("Installing dependencies...")
-	if _, err := runStep("Installing dependencies", func() error {
+	if err := ui.SpinnerWithError("Installing dependencies...", func() error {
 		return installDependencies(config.Name)
 	}); err == nil {
 		ui.Success("Dependencies installed")
 	}
 
 	// Run migrations
-	if err := runMigrations(config.Name); err != nil {
+	if err := ui.SpinnerWithError("Running migrations...", func() error {
+		return runMigrations(config.Name)
+	}); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
+	ui.Success("Database ready")
 
 	return nil
 }
@@ -539,8 +534,6 @@ func runMigrations(projectPath string) error {
 	originalDir, _ := os.Getwd()
 	os.Chdir(absPath)
 	defer os.Chdir(originalDir)
-
-	ui.Step("Preparing database...")
 
 	// Create temporary migration runner script
 	tmpDir := ".velocity/tmp"
