@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/fatih/color"
@@ -778,17 +779,19 @@ func StartDevServers(projectPath string) {
 		return
 	}
 
-	// Start npm run dev in background
+	// Start npm run dev in background (detached)
 	npmCmd := exec.Command("npm", "run", "dev")
 	npmCmd.Dir = absPath
+	npmCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := npmCmd.Start(); err != nil {
 		fmt.Printf("Failed to start npm: %v\n", err)
 		return
 	}
 
-	// Start air for hot reloading
+	// Start air for hot reloading (detached)
 	goCmd := exec.Command("air")
 	goCmd.Dir = absPath
+	goCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := goCmd.Start(); err != nil {
 		fmt.Printf("Failed to start Go server: %v\n", err)
 		return
