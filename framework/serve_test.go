@@ -22,8 +22,8 @@ func TestServeCmd(t *testing.T) {
 	if portFlag == nil {
 		t.Error("Port flag not found")
 	}
-	if portFlag.DefValue != "8080" {
-		t.Errorf("Port default = %s, want '8080'", portFlag.DefValue)
+	if portFlag.DefValue != "4000" {
+		t.Errorf("Port default = %s, want '4000'", portFlag.DefValue)
 	}
 
 	// Check env flag

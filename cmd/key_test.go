@@ -73,7 +73,7 @@ func TestUpdateEnvFile(t *testing.T) {
 	}
 
 	// Test: successful update
-	os.WriteFile(envPath, []byte("APP_NAME=Test\nCRYPTO_KEY=old\nPORT=3000\n"), 0644)
+	os.WriteFile(envPath, []byte("APP_NAME=Test\nCRYPTO_KEY=old\nPORT=4000\n"), 0644)
 	err = updateEnvFile("base64:newkey")
 	if err != nil {
 		t.Fatalf("updateEnvFile() error = %v", err)

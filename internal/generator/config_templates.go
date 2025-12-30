@@ -29,8 +29,8 @@ func generateEnvFile(config ProjectConfig) error {
 	envTemplate := `# Application
 APP_NAME={{ .Name }}
 APP_ENV=development
-APP_PORT=8080
-APP_URL=http://localhost:3000{{ if .Database }}
+APP_PORT=4000
+APP_URL=http://localhost:4000{{ if .Database }}
 
 # Database
 DB_CONNECTION={{ .Database }}
@@ -172,7 +172,7 @@ go build -o {{ .Name }}
 ./{{ .Name }}
 ` + "```" + `
 
-The application will start on http://localhost:3000 by default.
+The application will start on http://localhost:4000 by default.
 
 ## Project Structure
 

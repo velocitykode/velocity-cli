@@ -313,7 +313,7 @@ func LaunchNewProjectWizard(projectName string) {
 		fmt.Printf("  %s %s\n", cyan("cd"), config.Name)
 		fmt.Printf("  %s\n", cyan("npm run dev"))
 		fmt.Printf("  %s\n\n", cyan("go run main.go"))
-		fmt.Printf("%s\n\n", white("Default port: 8080 (set PORT env to change)"))
+		fmt.Printf("%s\n\n", white("Default port: 4000 (set PORT env to change)"))
 	}
 }
 
@@ -343,5 +343,5 @@ func CreateProjectWithDefaults(projectName string) {
 	fmt.Printf("  %s %s\n", cyan("cd"), projectName)
 	fmt.Printf("  %s\n", cyan("npm run dev"))
 	fmt.Printf("  %s\n\n", cyan("go run main.go"))
-	fmt.Printf("%s\n\n", white("Default port: 8080 (set PORT env to change)"))
+	fmt.Printf("%s\n\n", white("Default port: 4000 (set PORT env to change)"))
 }

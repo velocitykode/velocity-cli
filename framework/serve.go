@@ -49,7 +49,7 @@ The server will automatically reload when Go files change if --watch is enabled.
 
 func init() {
 
-	ServeCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to run the server on")
+	ServeCmd.Flags().StringVarP(&port, "port", "p", "4000", "Port to run the server on")
 	ServeCmd.Flags().StringVarP(&env, "env", "e", "development", "Environment to run in")
 	ServeCmd.Flags().BoolVarP(&watch, "watch", "w", true, "Enable hot reload")
 	ServeCmd.Flags().StringVar(&buildTags, "tags", "", "Build tags to pass to go build")
