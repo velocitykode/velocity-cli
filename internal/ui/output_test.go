@@ -25,16 +25,16 @@ func TestCommand(t *testing.T) {
 	}
 }
 
-func TestSpinnerWithError(t *testing.T) {
-	// Test that SpinnerWithError returns the action's error
-	expectedErr := "test error"
-	err := SpinnerWithError("Testing...", func() error {
+func TestLoader(t *testing.T) {
+	called := false
+	err := Loader("Testing...", func() error {
+		called = true
 		return nil
 	})
 	if err != nil {
-		t.Errorf("SpinnerWithError should return nil for successful action, got: %v", err)
+		t.Errorf("Loader should return nil for successful action, got: %v", err)
 	}
-
-	// Note: Can't easily test spinner visuals in unit test
-	_ = expectedErr
+	if !called {
+		t.Error("Loader action was not called")
+	}
 }

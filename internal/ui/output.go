@@ -2,8 +2,9 @@ package ui
 
 import (
 	"fmt"
+	"os"
+	"time"
 
-	"github.com/charmbracelet/huh/spinner"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -96,25 +97,42 @@ func NextSteps(steps []string) {
 	}
 }
 
-// Spinner runs an action with a spinner
-func Spinner(title string, action func()) error {
-	return spinner.New().
-		Title(title).
-		Action(action).
-		Run()
-}
-
-// SpinnerWithError runs an action with a spinner and returns error
-func SpinnerWithError(title string, action func() error) error {
+// Loader shows a bouncing dot animation while action runs
+func Loader(message string, action func() error) error {
+	done := make(chan bool)
 	var err error
-	spinErr := spinner.New().
-		Title(title).
-		Action(func() {
-			err = action()
-		}).
-		Run()
-	if spinErr != nil {
-		return spinErr
+
+	// Run action in goroutine
+	go func() {
+		err = action()
+		done <- true
+	}()
+
+	// Animation frames: dot bouncing left to right
+	frames := []string{
+		"●    ",
+		" ●   ",
+		"  ●  ",
+		"   ● ",
+		"    ●",
+		"   ● ",
+		"  ●  ",
+		" ●   ",
 	}
-	return err
+
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	i := 0
+	for {
+		select {
+		case <-done:
+			// Clear the loader line
+			fmt.Fprintf(os.Stdout, "\r%s\r", "          ")
+			return err
+		case <-ticker.C:
+			fmt.Fprintf(os.Stdout, "\r%s %s", mutedStyle.Render(frames[i]), message)
+			i = (i + 1) % len(frames)
+		}
+	}
 }

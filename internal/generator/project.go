@@ -39,7 +39,7 @@ func CreateProject(config ProjectConfig) error {
 	ui.Info("Creating new Velocity project")
 
 	// Clone template
-	if err := ui.SpinnerWithError("Cloning template...", func() error {
+	if err := ui.Loader("Cloning template...", func() error {
 		return cloneTemplate(config.Name)
 	}); err != nil {
 		return fmt.Errorf("failed to clone template: %w", err)
@@ -47,7 +47,7 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Template cloned")
 
 	// Replace module name in all files
-	if err := ui.SpinnerWithError("Configuring module...", func() error {
+	if err := ui.Loader("Configuring module...", func() error {
 		return replaceModuleName(config.Name, moduleName)
 	}); err != nil {
 		return fmt.Errorf("failed to configure project: %w", err)
@@ -55,7 +55,7 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Module configured")
 
 	// Remove template git history and initialize new repo
-	if err := ui.SpinnerWithError("Initializing Git...", func() error {
+	if err := ui.Loader("Initializing Git...", func() error {
 		return reinitGitRepo(config.Name)
 	}); err != nil {
 		return fmt.Errorf("failed to initialize git: %w", err)
@@ -63,7 +63,7 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Git initialized")
 
 	// Create default migrations
-	if err := ui.SpinnerWithError("Creating migrations...", func() error {
+	if err := ui.Loader("Creating migrations...", func() error {
 		return createDefaultMigrations(config.Name)
 	}); err != nil {
 		return fmt.Errorf("failed to create migrations: %w", err)
@@ -71,7 +71,7 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Migrations created")
 
 	// Create proper .env.example with database config
-	if err := ui.SpinnerWithError("Setting up environment...", func() error {
+	if err := ui.Loader("Setting up environment...", func() error {
 		return createEnvFiles(config)
 	}); err != nil {
 		return fmt.Errorf("failed to create env files: %w", err)
@@ -79,7 +79,7 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Environment configured")
 
 	// Setup hot reload
-	if err := ui.SpinnerWithError("Configuring hot reload...", func() error {
+	if err := ui.Loader("Configuring hot reload...", func() error {
 		return setupTemplatesAndHotReload(config.Name)
 	}); err != nil {
 		return fmt.Errorf("failed to setup templates: %w", err)
@@ -87,14 +87,14 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Hot reload ready")
 
 	// Install dependencies
-	if err := ui.SpinnerWithError("Installing dependencies...", func() error {
+	if err := ui.Loader("Installing dependencies...", func() error {
 		return installDependencies(config.Name)
 	}); err == nil {
 		ui.Success("Dependencies installed")
 	}
 
 	// Run migrations
-	if err := ui.SpinnerWithError("Running migrations...", func() error {
+	if err := ui.Loader("Running migrations...", func() error {
 		return runMigrations(config.Name)
 	}); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
