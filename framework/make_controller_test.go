@@ -90,10 +90,10 @@ func TestGenerateController(t *testing.T) {
 		t.Fatalf("Failed to read controller file: %v", err)
 	}
 
-	// Check content
+	// Check content - simple function pattern
 	contentStr := string(content)
-	if !strings.Contains(contentStr, "UserIndex") {
-		t.Error("Controller does not contain correct function name")
+	if !strings.Contains(contentStr, "func User(ctx *router.Context)") {
+		t.Error("Controller does not contain function")
 	}
 
 	if !strings.Contains(contentStr, "package controllers") {
@@ -145,12 +145,12 @@ func TestGenerateResourceController(t *testing.T) {
 		t.Fatalf("Failed to read controller file: %v", err)
 	}
 
-	// Check that it contains CRUD methods (function-based naming)
+	// Check that it contains CRUD functions
 	contentStr := string(content)
-	expectedMethods := []string{"PostIndex", "PostCreate", "PostStore", "PostShow", "PostEdit", "PostUpdate", "PostDestroy"}
-	for _, method := range expectedMethods {
-		if !strings.Contains(contentStr, method) {
-			t.Errorf("Resource controller does not contain %s method", method)
+	expectedFuncs := []string{"func Index(", "func Create(", "func Store(", "func Show(", "func Edit(", "func Update(", "func Destroy("}
+	for _, fn := range expectedFuncs {
+		if !strings.Contains(contentStr, fn) {
+			t.Errorf("Resource controller does not contain %s", fn)
 		}
 	}
 }

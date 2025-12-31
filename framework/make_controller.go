@@ -125,8 +125,8 @@ func getControllerTemplate() *template.Template {
 
 import "github.com/velocitykode/velocity/pkg/router"
 
-func {{ .ControllerName }}Index(ctx *router.Context) error {
-	return ctx.String(200, "Hello from {{ .ControllerName }}")
+func {{ .ControllerName }}(ctx *router.Context) error {
+	return ctx.String(200, "{{ .ControllerName }}")
 }
 `))
 	}
