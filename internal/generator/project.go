@@ -17,7 +17,7 @@ import (
 )
 
 // Fallback version if GitHub API is unavailable
-const fallbackVelocityVersion = "v0.1.1"
+const fallbackVelocityVersion = "v0.0.3"
 
 // getLatestVelocityVersion fetches the latest release tag from GitHub
 func getLatestVelocityVersion() string {
