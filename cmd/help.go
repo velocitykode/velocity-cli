@@ -24,9 +24,11 @@ func InitHelp(root *cobra.Command) {
 func customHelpFunc(cmd *cobra.Command, args []string) {
 	w := cmd.OutOrStdout()
 
-	// Show banner
-	fmt.Fprintln(w, banner.MediumBlocky())
-	fmt.Fprintln(w)
+	// Only show banner for root command
+	if !cmd.HasParent() {
+		fmt.Fprintln(w, banner.MediumBlocky())
+		fmt.Fprintln(w)
+	}
 
 	// Usage
 	fmt.Fprintln(w, sectionStyle.Render("Usage:"))

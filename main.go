@@ -44,13 +44,7 @@ func main() {
 	rootCmd.AddCommand(framework.MigrateFreshCmd)
 
 	// Code generation
-	makeCmd := &cobra.Command{
-		Use:     "make",
-		Aliases: []string{"generate", "g"},
-		Short:   "Generate code (controllers, models, etc.)",
-	}
-	makeCmd.AddCommand(framework.MakeControllerCmd)
-	rootCmd.AddCommand(makeCmd)
+	rootCmd.AddCommand(framework.MakeControllerCmd)
 
 	// Utility commands
 	rootCmd.AddCommand(cmd.KeyCmd)

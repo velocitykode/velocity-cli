@@ -22,12 +22,17 @@ var MakeControllerCmd = &cobra.Command{
 	Use:   "make:controller [name]",
 	Short: "Generate a new controller",
 	Long: `Generate a new HTTP controller with optional CRUD methods.
-	
+
 Examples:
   velocity make:controller UserController
   velocity make:controller PostController --resource
   velocity make:controller API/ProductController --api`,
-	Args: cobra.ExactArgs(1),
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return fmt.Errorf("controller name is required\n\nUsage: velocity make:controller [name]")
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
 		generateController(name)
