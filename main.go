@@ -6,7 +6,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/velocitykode/velocity-cli/cmd"
-	"github.com/velocitykode/velocity-cli/framework"
 	"github.com/velocitykode/velocity-cli/internal/delegator"
 	"github.com/velocitykode/velocity-cli/internal/version"
 )
@@ -51,15 +50,6 @@ func main() {
 	rootCmd.AddCommand(cmd.InitCmd)
 	rootCmd.AddCommand(cmd.ConfigCmd)
 	rootCmd.AddCommand(cmd.VersionCmd)
-
-	// Framework commands (for backward compatibility, will be deprecated)
-	// These are now also available via project CLI when delegating
-	rootCmd.AddCommand(framework.ServeCmd)
-	rootCmd.AddCommand(framework.BuildCmd)
-	rootCmd.AddCommand(framework.MigrateCmd)
-	rootCmd.AddCommand(framework.MigrateFreshCmd)
-	rootCmd.AddCommand(framework.MakeControllerCmd)
-	rootCmd.AddCommand(cmd.KeyCmd)
 
 	// Initialize help after adding all commands
 	cmd.InitHelp(rootCmd)
