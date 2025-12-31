@@ -145,9 +145,9 @@ func TestGenerateResourceController(t *testing.T) {
 		t.Fatalf("Failed to read controller file: %v", err)
 	}
 
-	// Check that it contains CRUD functions
+	// Check that it contains prefixed CRUD functions
 	contentStr := string(content)
-	expectedFuncs := []string{"func Index(", "func Create(", "func Store(", "func Show(", "func Edit(", "func Update(", "func Destroy("}
+	expectedFuncs := []string{"func PostIndex(", "func PostCreate(", "func PostStore(", "func PostShow(", "func PostEdit(", "func PostUpdate(", "func PostDestroy("}
 	for _, fn := range expectedFuncs {
 		if !strings.Contains(contentStr, fn) {
 			t.Errorf("Resource controller does not contain %s", fn)
