@@ -3,15 +3,48 @@ package generator
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/velocitykode/velocity-cli/internal/ui"
 )
+
+// Fallback version if GitHub API is unavailable
+const fallbackVelocityVersion = "v0.1.1"
+
+// getLatestVelocityVersion fetches the latest release tag from GitHub
+func getLatestVelocityVersion() string {
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get("https://api.github.com/repos/velocitykode/velocity/releases/latest")
+	if err != nil {
+		return fallbackVelocityVersion
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fallbackVelocityVersion
+	}
+
+	var release struct {
+		TagName string `json:"tag_name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return fallbackVelocityVersion
+	}
+
+	if release.TagName == "" {
+		return fallbackVelocityVersion
+	}
+
+	return release.TagName
+}
 
 // ProjectConfig holds the configuration for a new project
 type ProjectConfig struct {
@@ -153,8 +186,9 @@ func replaceModuleName(projectPath, moduleName string) error {
 		return err
 	}
 
-	// Set pinned version of velocity framework
-	cmd = exec.Command("go", "mod", "edit", "-require=github.com/velocitykode/velocity@v0.0.3")
+	// Set pinned version of velocity framework (fetched from GitHub releases)
+	velocityVersion := getLatestVelocityVersion()
+	cmd = exec.Command("go", "mod", "edit", fmt.Sprintf("-require=github.com/velocitykode/velocity@%s", velocityVersion))
 	cmd.Dir = absPath
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set velocity framework version: %w", err)
