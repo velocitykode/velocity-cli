@@ -34,3 +34,4 @@ Full documentation at **[velocitykode.com/docs](https://velocitykode.com/docs)**
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
+
