@@ -148,7 +148,15 @@ func isNewer(path string, t time.Time) bool {
 // CheckVersionMismatch warns if global CLI version differs from project's cli package version.
 func CheckVersionMismatch(globalVersion string) {
 	projectVersion := getProjectCLIVersion()
-	if projectVersion != "" && projectVersion != globalVersion {
+	if projectVersion == "" {
+		return
+	}
+
+	// Normalize: strip "v" prefix for comparison
+	global := strings.TrimPrefix(globalVersion, "v")
+	project := strings.TrimPrefix(projectVersion, "v")
+
+	if global != project {
 		ui.Warning(fmt.Sprintf("CLI version mismatch: global=%s, project=%s", globalVersion, projectVersion))
 	}
 }
