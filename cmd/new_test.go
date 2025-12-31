@@ -19,3 +19,23 @@ func TestNewCmd(t *testing.T) {
 		t.Error("NewCmd.Args is nil")
 	}
 }
+
+func TestNewCmdArgsValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{"no args", []string{}, true},
+		{"with project name", []string{"myproject"}, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := NewCmd.Args(NewCmd, tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Args() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

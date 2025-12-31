@@ -21,6 +21,17 @@ func InitHelp(root *cobra.Command) {
 	root.SetUsageFunc(customUsageFunc)
 }
 
+// Command groups for organized help output
+var commandGroups = map[string][]string{
+	"project":     {"new", "init"},
+	"development": {"serve", "build"},
+	"database":    {"migrate", "migrate:fresh"},
+	"make":        {"make:controller"},
+	"key":         {"key:generate"},
+}
+
+var groupOrder = []string{"project", "development", "database", "make", "key"}
+
 func customHelpFunc(cmd *cobra.Command, args []string) {
 	w := cmd.OutOrStdout()
 
@@ -35,17 +46,66 @@ func customHelpFunc(cmd *cobra.Command, args []string) {
 	fmt.Fprintf(w, "  %s [command]\n", cmd.CommandPath())
 	fmt.Fprintln(w)
 
-	// Commands
+	// Commands - grouped by namespace for root command
 	if len(cmd.Commands()) > 0 {
-		fmt.Fprintln(w, sectionStyle.Render("Commands:"))
-		for _, c := range cmd.Commands() {
-			if !c.Hidden {
-				fmt.Fprintf(w, "  %s  %s\n",
-					commandStyle.Width(24).Render(c.Name()),
-					descStyle.Render(c.Short))
+		if !cmd.HasParent() {
+			// Root command - show grouped
+			cmdMap := make(map[string]*cobra.Command)
+			for _, c := range cmd.Commands() {
+				if !c.Hidden {
+					cmdMap[c.Name()] = c
+				}
 			}
+
+			// Print groups
+			for _, group := range groupOrder {
+				cmds := commandGroups[group]
+				hasCommands := false
+				for _, name := range cmds {
+					if _, ok := cmdMap[name]; ok {
+						hasCommands = true
+						break
+					}
+				}
+				if !hasCommands {
+					continue
+				}
+
+				fmt.Fprintln(w, descStyle.Render(group))
+				for _, name := range cmds {
+					if c, ok := cmdMap[name]; ok {
+						fmt.Fprintf(w, "  %s  %s\n",
+							commandStyle.Width(22).Render(c.Name()),
+							descStyle.Render(c.Short))
+						delete(cmdMap, name)
+					}
+				}
+				fmt.Fprintln(w)
+			}
+
+			// Print remaining ungrouped commands (config, help, version)
+			if len(cmdMap) > 0 {
+				for _, c := range cmd.Commands() {
+					if _, ok := cmdMap[c.Name()]; ok {
+						fmt.Fprintf(w, "  %s  %s\n",
+							commandStyle.Width(22).Render(c.Name()),
+							descStyle.Render(c.Short))
+					}
+				}
+				fmt.Fprintln(w)
+			}
+		} else {
+			// Subcommand - show flat list
+			fmt.Fprintln(w, sectionStyle.Render("Commands:"))
+			for _, c := range cmd.Commands() {
+				if !c.Hidden {
+					fmt.Fprintf(w, "  %s  %s\n",
+						commandStyle.Width(22).Render(c.Name()),
+						descStyle.Render(c.Short))
+				}
+			}
+			fmt.Fprintln(w)
 		}
-		fmt.Fprintln(w)
 	}
 
 	// Flags

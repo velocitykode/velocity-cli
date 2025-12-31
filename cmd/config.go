@@ -16,17 +16,37 @@ var ConfigCmd = &cobra.Command{
 }
 
 var configSetCmd = &cobra.Command{
-	Use:   "set <key> <value>",
-	Short: "Set a configuration value",
-	Args:  cobra.ExactArgs(2),
-	RunE:  runConfigSet,
+	Use:           "set <key> <value>",
+	Short:         "Set a configuration value",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 2 {
+			ui.Error("Key and value are required")
+			ui.Newline()
+			ui.Muted("Usage: velocity config set <key> <value>")
+			return fmt.Errorf("")
+		}
+		return nil
+	},
+	RunE: runConfigSet,
 }
 
 var configGetCmd = &cobra.Command{
-	Use:   "get <key>",
-	Short: "Get a configuration value",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runConfigGet,
+	Use:           "get <key>",
+	Short:         "Get a configuration value",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			ui.Error("Key is required")
+			ui.Newline()
+			ui.Muted("Usage: velocity config get <key>")
+			return fmt.Errorf("")
+		}
+		return nil
+	},
+	RunE: runConfigGet,
 }
 
 var configListCmd = &cobra.Command{

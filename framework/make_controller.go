@@ -27,9 +27,19 @@ Examples:
   velocity make:controller UserController
   velocity make:controller PostController --resource
   velocity make:controller API/ProductController --api`,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			return fmt.Errorf("controller name is required\n\nUsage: velocity make:controller [name]")
+			ui.Error("Controller name is required")
+			ui.Newline()
+			ui.Muted("Usage: velocity make:controller [name]")
+			ui.Newline()
+			ui.Muted("Flags:")
+			ui.Muted("  --api         Generate API controller (JSON responses)")
+			ui.Muted("  --resource    Generate resource controller with CRUD methods")
+			ui.Muted("  --methods     Custom methods (comma-separated)")
+			return fmt.Errorf("")
 		}
 		return nil
 	},

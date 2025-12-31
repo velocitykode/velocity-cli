@@ -21,8 +21,29 @@ func TestMakeControllerCmd(t *testing.T) {
 	if MakeControllerCmd.Args == nil {
 		t.Error("MakeControllerCmd.Args is nil")
 	}
+}
 
-	// Test flags
+func TestMakeControllerCmdArgsValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{"no args", []string{}, true},
+		{"with controller name", []string{"User"}, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := MakeControllerCmd.Args(MakeControllerCmd, tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Args() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestMakeControllerCmdFlags(t *testing.T) {
 	flags := MakeControllerCmd.Flags()
 
 	// Check resource flag

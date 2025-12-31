@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/velocitykode/velocity-cli/internal/generator"
 	"github.com/velocitykode/velocity-cli/internal/ui"
@@ -14,9 +16,25 @@ var (
 )
 
 var NewCmd = &cobra.Command{
-	Use:   "new [project-name]",
-	Short: "Create a new Velocity project",
-	Args:  cobra.ExactArgs(1),
+	Use:           "new [project-name]",
+	Short:         "Create a new Velocity project",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			ui.Error("Project name is required")
+			ui.Newline()
+			ui.Muted("Usage: velocity new [project-name]")
+			ui.Newline()
+			ui.Muted("Flags:")
+			ui.Muted("  --database    Database driver (postgres, mysql, sqlite)")
+			ui.Muted("  --cache       Cache driver (redis, memory)")
+			ui.Muted("  --auth        Include authentication scaffolding")
+			ui.Muted("  --api         API-only structure (no views)")
+			return fmt.Errorf("")
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		projectName := args[0]
 		ui.Header("velocity new")

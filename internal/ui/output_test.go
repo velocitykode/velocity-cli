@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -36,5 +37,29 @@ func TestTask(t *testing.T) {
 	}
 	if !called {
 		t.Error("Task action was not called")
+	}
+}
+
+func TestSpinner(t *testing.T) {
+	called := false
+	err := Spinner("Loading", func() error {
+		called = true
+		return nil
+	})
+	if err != nil {
+		t.Errorf("Spinner should return nil for successful action, got: %v", err)
+	}
+	if !called {
+		t.Error("Spinner action was not called")
+	}
+}
+
+func TestSpinnerWithError(t *testing.T) {
+	expectedErr := fmt.Errorf("test error")
+	err := Spinner("Loading", func() error {
+		return expectedErr
+	})
+	if err != expectedErr {
+		t.Errorf("Spinner should return error from action, got: %v", err)
 	}
 }

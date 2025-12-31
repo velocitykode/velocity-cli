@@ -75,7 +75,6 @@ func TestCustomHelpFunc(t *testing.T) {
 	expectedElements := []string{
 		"██",           // Banner character
 		"Usage",        // Usage section
-		"Commands",     // Commands section
 		"test",         // Test command
 		"Test command", // Test command description
 		"Flags",        // Flags section
