@@ -2,46 +2,45 @@ package controllers
 
 import (
 	"github.com/velocitykode/velocity/pkg/router"
-	{{ if .API }}"encoding/json"{{ end }}
 )
 {{ if .Resource }}
 // Index displays a listing of the resource
 func {{ .ControllerName }}Index(ctx *router.Context) error {
-	{{ if .API }}return ctx.JSON(map[string]string{"message": "List all items"}){{ else }}return ctx.String("List all items"){{ end }}
+	{{ if .API }}return ctx.JSON(200, map[string]string{"message": "List all items"}){{ else }}return ctx.String(200, "List all items"){{ end }}
 }
 
 // Create shows the form for creating a new resource
 func {{ .ControllerName }}Create(ctx *router.Context) error {
-	{{ if .API }}return ctx.Status(405).String("Method not allowed"){{ else }}return ctx.String("Show create form"){{ end }}
+	{{ if .API }}return ctx.String(405, "Method not allowed"){{ else }}return ctx.String(200, "Show create form"){{ end }}
 }
 
 // Store saves a new resource
 func {{ .ControllerName }}Store(ctx *router.Context) error {
-	{{ if .API }}return ctx.JSON(map[string]string{"message": "Item created"}){{ else }}return ctx.String("Store new item"){{ end }}
+	{{ if .API }}return ctx.JSON(200, map[string]string{"message": "Item created"}){{ else }}return ctx.String(200, "Store new item"){{ end }}
 }
 
 // Show displays the specified resource
 func {{ .ControllerName }}Show(ctx *router.Context) error {
-	{{ if .API }}return ctx.JSON(map[string]string{"message": "Show item"}){{ else }}return ctx.String("Show item"){{ end }}
+	{{ if .API }}return ctx.JSON(200, map[string]string{"message": "Show item"}){{ else }}return ctx.String(200, "Show item"){{ end }}
 }
 
 // Edit shows the form for editing the specified resource
 func {{ .ControllerName }}Edit(ctx *router.Context) error {
-	{{ if .API }}return ctx.Status(405).String("Method not allowed"){{ else }}return ctx.String("Show edit form"){{ end }}
+	{{ if .API }}return ctx.String(405, "Method not allowed"){{ else }}return ctx.String(200, "Show edit form"){{ end }}
 }
 
 // Update updates the specified resource
 func {{ .ControllerName }}Update(ctx *router.Context) error {
-	{{ if .API }}return ctx.JSON(map[string]string{"message": "Item updated"}){{ else }}return ctx.String("Update item"){{ end }}
+	{{ if .API }}return ctx.JSON(200, map[string]string{"message": "Item updated"}){{ else }}return ctx.String(200, "Update item"){{ end }}
 }
 
 // Destroy removes the specified resource
 func {{ .ControllerName }}Destroy(ctx *router.Context) error {
-	{{ if .API }}return ctx.Status(204).String(""){{ else }}return ctx.String("Delete item"){{ end }}
+	{{ if .API }}return ctx.String(204, ""){{ else }}return ctx.String(200, "Delete item"){{ end }}
 }
 {{ else }}{{ range .Methods }}
 // {{ . }} handles the {{ . }} action
 func {{ $.ControllerName }}{{ . }}(ctx *router.Context) error {
-	{{ if $.API }}return ctx.JSON(map[string]string{"action": "{{ . }}"}){{ else }}return ctx.String("{{ . }} action"){{ end }}
+	{{ if $.API }}return ctx.JSON(200, map[string]string{"action": "{{ . }}"}){{ else }}return ctx.String(200, "{{ . }} action"){{ end }}
 }
 {{ end }}{{ end }}
