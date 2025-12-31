@@ -8,7 +8,7 @@ import (
 )
 
 // Version is the CLI version - single source of truth
-const Version = "0.5.8"
+const Version = "0.5.9"
 
 // Root command is defined in main.go
 
