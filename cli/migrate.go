@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 	"github.com/velocitykode/velocity/pkg/orm"
 	"github.com/velocitykode/velocity/pkg/orm/migrate"
-	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
 var migrateCmd = &cobra.Command{

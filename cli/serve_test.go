@@ -484,4 +484,3 @@ done:
 		t.Errorf("Expected 1-2 rebuild signals due to debounce, got %d", count)
 	}
 }
-
