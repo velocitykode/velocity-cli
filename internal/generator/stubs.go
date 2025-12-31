@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
-	"runtime"
 	"text/template"
+
+	"github.com/velocitykode/velocity-cli/internal/stubs"
 )
 
 // copyStubFile copies and processes a stub file from internal/stubs to the destination
@@ -15,16 +16,14 @@ func copyStubFile(stubName, destPath string) error {
 
 // copyStubFileWithConfig copies and processes a stub file with template data
 func copyStubFileWithConfig(stubName, destPath string, config interface{}) error {
-	// Get the directory of this source file
-	_, filename, _, _ := runtime.Caller(0)
-	baseDir := filepath.Dir(filepath.Dir(filename))
-
-	// Construct full stub path
-	stubPath := filepath.Join(baseDir, "stubs", stubName)
-
-	// Read source file
-	content, err := os.ReadFile(stubPath)
+	// Read from embedded stubs
+	content, err := stubs.Get(stubName)
 	if err != nil {
+		return err
+	}
+
+	// Ensure destination directory exists
+	if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
 		return err
 	}
 

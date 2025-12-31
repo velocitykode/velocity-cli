@@ -72,14 +72,14 @@ func TestGenerateController(t *testing.T) {
 	os.Chdir(tempDir)
 	defer os.Chdir(originalDir)
 
-	// Create app/controllers directory
-	os.MkdirAll("app/controllers", 0755)
+	// Create app/http/controllers directory
+	os.MkdirAll("app/http/controllers", 0755)
 
 	// Test generating a basic controller
 	generateController("User")
 
 	// Check that controller file was created (snake_case filename)
-	controllerPath := filepath.Join("app", "controllers", "user_controller.go")
+	controllerPath := filepath.Join("app", "http", "controllers", "user_controller.go")
 	if _, err := os.Stat(controllerPath); os.IsNotExist(err) {
 		t.Error("Controller file was not created")
 	}
@@ -92,8 +92,8 @@ func TestGenerateController(t *testing.T) {
 
 	// Check content
 	contentStr := string(content)
-	if !strings.Contains(contentStr, "UserController") {
-		t.Error("Controller does not contain correct struct name")
+	if !strings.Contains(contentStr, "UserIndex") {
+		t.Error("Controller does not contain correct function name")
 	}
 
 	if !strings.Contains(contentStr, "package controllers") {
@@ -108,14 +108,14 @@ func TestGenerateControllerWithPath(t *testing.T) {
 	os.Chdir(tempDir)
 	defer os.Chdir(originalDir)
 
-	// Create app/controllers directory
-	os.MkdirAll("app/controllers", 0755)
+	// Create app/http/controllers directory
+	os.MkdirAll("app/http/controllers", 0755)
 
 	// Test generating a controller in subdirectory
 	generateController("API/Product")
 
 	// Check that controller file was created in subdirectory (snake_case filename)
-	controllerPath := filepath.Join("app", "controllers", "api", "product_controller.go")
+	controllerPath := filepath.Join("app", "http", "controllers", "api", "product_controller.go")
 	if _, err := os.Stat(controllerPath); os.IsNotExist(err) {
 		t.Error("Controller file was not created in subdirectory")
 	}
@@ -128,8 +128,8 @@ func TestGenerateResourceController(t *testing.T) {
 	os.Chdir(tempDir)
 	defer os.Chdir(originalDir)
 
-	// Create app/controllers directory
-	os.MkdirAll("app/controllers", 0755)
+	// Create app/http/controllers directory
+	os.MkdirAll("app/http/controllers", 0755)
 
 	// Set resource flag
 	resource = true
@@ -139,15 +139,15 @@ func TestGenerateResourceController(t *testing.T) {
 	generateController("Post")
 
 	// Check that controller file was created (snake_case filename)
-	controllerPath := filepath.Join("app", "controllers", "post_controller.go")
+	controllerPath := filepath.Join("app", "http", "controllers", "post_controller.go")
 	content, err := os.ReadFile(controllerPath)
 	if err != nil {
 		t.Fatalf("Failed to read controller file: %v", err)
 	}
 
-	// Check that it contains CRUD methods
+	// Check that it contains CRUD methods (function-based naming)
 	contentStr := string(content)
-	expectedMethods := []string{"Index", "Create", "Store", "Show", "Edit", "Update", "Destroy"}
+	expectedMethods := []string{"PostIndex", "PostCreate", "PostStore", "PostShow", "PostEdit", "PostUpdate", "PostDestroy"}
 	for _, method := range expectedMethods {
 		if !strings.Contains(contentStr, method) {
 			t.Errorf("Resource controller does not contain %s method", method)

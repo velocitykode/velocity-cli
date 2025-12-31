@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"github.com/velocitykode/velocity-cli/internal/stubs"
 	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
@@ -56,17 +57,15 @@ func init() {
 }
 
 func generateController(name string) {
-	// Ensure name ends with Controller
-	if !strings.HasSuffix(name, "Controller") {
-		name += "Controller"
-	}
-
-	// Parse path and name
+	// Parse path and name (no longer require Controller suffix)
 	parts := strings.Split(name, "/")
 	controllerName := parts[len(parts)-1]
 
-	// Determine file path
-	dir := filepath.Join("app", "controllers")
+	// Remove Controller suffix if present for cleaner function names
+	baseName := strings.TrimSuffix(controllerName, "Controller")
+
+	// Determine file path - using app/http/controllers
+	dir := filepath.Join("app", "http", "controllers")
 	if len(parts) > 1 {
 		subdir := strings.Join(parts[:len(parts)-1], "/")
 		dir = filepath.Join(dir, strings.ToLower(subdir))
@@ -78,8 +77,8 @@ func generateController(name string) {
 		return
 	}
 
-	// Generate file path
-	filename := toSnakeCase(controllerName) + ".go"
+	// Generate file path (snake_case with _controller suffix)
+	filename := toSnakeCase(baseName) + "_controller.go"
 	filePath := filepath.Join(dir, filename)
 
 	// Check if file exists
@@ -99,7 +98,7 @@ func generateController(name string) {
 	// Generate controller code
 	data := map[string]interface{}{
 		"Package":        getPackageName(dir),
-		"ControllerName": controllerName,
+		"ControllerName": baseName,
 		"Resource":       resource,
 		"API":            api,
 		"Methods":        parseCustomMethods(methods),
@@ -119,106 +118,19 @@ func generateController(name string) {
 }
 
 func getControllerTemplate() *template.Template {
-	const tmpl = `package {{ .Package }}
+	content, err := stubs.Get("app/http/controllers/controller.go.stub")
+	if err != nil {
+		// Fallback to basic template if stub not found
+		return template.Must(template.New("controller").Parse(`package {{ .Package }}
 
-import (
-	"net/http"
-	{{ if .API }}"encoding/json"{{ end }}
-)
+import "github.com/velocitykode/velocity/pkg/router"
 
-type {{ .ControllerName }} struct{}
-
-func New{{ .ControllerName }}() *{{ .ControllerName }} {
-	return &{{ .ControllerName }}{}
+func {{ .ControllerName }}Index(ctx *router.Context) error {
+	return ctx.String("Hello from {{ .ControllerName }}")
 }
-{{ if .Resource }}
-// Index displays a listing of the resource
-func (c *{{ .ControllerName }}) Index(w http.ResponseWriter, r *http.Request) {
-	{{ if .API }}
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "List all items",
-	})
-	{{ else }}
-	w.Write([]byte("List all items"))
-	{{ end }}
-}
-
-// Create shows the form for creating a new resource
-func (c *{{ .ControllerName }}) Create(w http.ResponseWriter, r *http.Request) {
-	{{ if .API }}
-	w.WriteHeader(http.StatusMethodNotAllowed)
-	{{ else }}
-	w.Write([]byte("Show create form"))
-	{{ end }}
-}
-
-// Store saves a new resource
-func (c *{{ .ControllerName }}) Store(w http.ResponseWriter, r *http.Request) {
-	{{ if .API }}
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Item created",
-	})
-	{{ else }}
-	w.Write([]byte("Store new item"))
-	{{ end }}
-}
-
-// Show displays the specified resource
-func (c *{{ .ControllerName }}) Show(w http.ResponseWriter, r *http.Request) {
-	{{ if .API }}
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Show item",
-	})
-	{{ else }}
-	w.Write([]byte("Show item"))
-	{{ end }}
-}
-
-// Edit shows the form for editing the specified resource
-func (c *{{ .ControllerName }}) Edit(w http.ResponseWriter, r *http.Request) {
-	{{ if .API }}
-	w.WriteHeader(http.StatusMethodNotAllowed)
-	{{ else }}
-	w.Write([]byte("Show edit form"))
-	{{ end }}
-}
-
-// Update updates the specified resource
-func (c *{{ .ControllerName }}) Update(w http.ResponseWriter, r *http.Request) {
-	{{ if .API }}
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Item updated",
-	})
-	{{ else }}
-	w.Write([]byte("Update item"))
-	{{ end }}
-}
-
-// Destroy removes the specified resource
-func (c *{{ .ControllerName }}) Destroy(w http.ResponseWriter, r *http.Request) {
-	{{ if .API }}
-	w.WriteHeader(http.StatusNoContent)
-	{{ else }}
-	w.Write([]byte("Delete item"))
-	{{ end }}
-}
-{{ else }}
-{{ range .Methods }}
-// {{ . }} handles the {{ . }} action
-func (c *{{ $.ControllerName }}) {{ . }}(w http.ResponseWriter, r *http.Request) {
-	{{ if $.API }}
-	json.NewEncoder(w).Encode(map[string]string{
-		"action": "{{ . }}",
-	})
-	{{ else }}
-	w.Write([]byte("{{ . }} action"))
-	{{ end }}
-}
-{{ end }}
-{{ end }}
-`
-
-	return template.Must(template.New("controller").Parse(tmpl))
+`))
+	}
+	return template.Must(template.New("controller").Parse(string(content)))
 }
 
 func getPackageName(dir string) string {
