@@ -10,6 +10,8 @@ import (
 	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
+// Note: strings is used for strings.ReplaceAll in script template
+
 // MigrateCmd represents the migrate command
 var MigrateCmd = &cobra.Command{
 	Use:   "migrate",
@@ -45,14 +47,20 @@ func runMigrations(fresh bool) {
 		os.Exit(1)
 	}
 
-	// Create migration runner script
+	// Get module name from go.mod
+	moduleName, err := getModuleName()
+	if err != nil {
+		ui.Error(fmt.Sprintf("Failed to read module name: %v", err))
+		os.Exit(1)
+	}
+
+	// Create migration runner script with clean output
 	script := `
 package main
 
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	_ "IMPORT_PATH/database/migrations"
 	"github.com/joho/godotenv"
@@ -61,73 +69,69 @@ import (
 )
 
 const (
-	colorReset  = "\033[0m"
-	colorRed    = "\033[31m"
-	colorGreen  = "\033[32m"
-	colorYellow = "\033[33m"
-	colorBlue   = "\033[34m"
-	colorWhite  = "\033[37m"
+	colorReset   = "\033[0m"
+	colorRed     = "\033[31m"
+	colorGreen   = "\033[32m"
+	colorCyan    = "\033[36m"
+	colorMuted   = "\033[90m"
 )
 
-func formatLine(text string) string {
-	status := colorGreen + "DONE" + colorReset
-
-	// Calculate dots needed (assuming 180 char width)
-	dotsNeeded := 180 - len(text) - 5 // 5 for " DONE"
-	if dotsNeeded < 0 {
-		dotsNeeded = 3
-	}
-	dots := strings.Repeat(".", dotsNeeded)
-
-	return fmt.Sprintf("%s %s %s", text, dots, status)
+func arrow() string {
+	return colorCyan + "→" + colorReset
 }
 
-func printInfo(message string) {
-	fmt.Printf("\n%s%s%s %s\n\n", colorBlue, "[INFO]", colorReset, message)
+func check() string {
+	return colorGreen + "✓" + colorReset
+}
+
+func cross() string {
+	return colorRed + "✗" + colorReset
+}
+
+func muted(s string) string {
+	return colorMuted + s + colorReset
+}
+
+func success(s string) string {
+	return colorGreen + s + colorReset
 }
 
 func main() {
 	fresh := len(os.Args) > 1 && os.Args[1] == "fresh"
 
 	if err := godotenv.Load(); err != nil {
-		fmt.Println("Warning: .env file not found")
+		// Silent - .env is optional
 	}
 
 	if err := orm.InitFromEnv(); err != nil {
-		fmt.Printf("Failed to initialize database: %v\n", err)
+		fmt.Printf("%s %sDatabase connection failed: %v%s\n", cross(), colorRed, err, colorReset)
 		os.Exit(1)
 	}
 
 	driver := orm.DB()
 	if driver == nil {
-		fmt.Println("Database driver not initialized")
+		fmt.Printf("%s %sDatabase driver not initialized%s\n", cross(), colorRed, colorReset)
 		os.Exit(1)
 	}
 
 	driverName := os.Getenv("DB_CONNECTION")
-
 	migrator := migrate.NewMigrator(driver, driverName)
 
-	fmt.Println(formatLine("Creating migration table"))
-
 	if fresh {
-		printInfo("Dropping all tables and re-running migrations.")
+		fmt.Printf("%s %s\n", arrow(), muted("Dropping all tables"))
 
-		// Get all migrations
 		registry := migrate.All()
 
 		if err := migrator.Fresh(); err != nil {
-			fmt.Printf("Fresh migration failed: %v\n", err)
+			fmt.Printf("%s %sFresh migration failed: %v%s\n", cross(), colorRed, err, colorReset)
 			os.Exit(1)
 		}
 
-		// Show migrated
+		fmt.Printf("%s %s\n", arrow(), muted("Running migrations"))
 		for _, m := range registry {
-			text := fmt.Sprintf("%s_%s", m.Version, m.Description)
-			fmt.Println(formatLine(text))
+			fmt.Printf("  %s %s\n", check(), muted(m.Version+"_"+m.Description))
 		}
 	} else {
-		// Get pending migrations to show progress
 		registry := migrate.All()
 
 		// Get applied migrations
@@ -152,35 +156,26 @@ func main() {
 		}
 
 		if len(pending) == 0 {
-			fmt.Println("\nNothing to migrate")
+			fmt.Printf("%s %s\n", arrow(), muted("Nothing to migrate"))
 			os.Exit(0)
 		}
 
-		printInfo("Running migrations.")
+		fmt.Printf("%s %s\n", arrow(), muted("Running migrations"))
 
-		// Print migrations that will be run
-		for _, m := range pending {
-			text := fmt.Sprintf("%s_%s", m.Version, m.Description)
-			fmt.Println(formatLine(text))
+		if err := migrator.Up(); err != nil {
+			fmt.Printf("%s %sMigration failed: %v%s\n", cross(), colorRed, err, colorReset)
+			os.Exit(1)
 		}
 
-		// Run all migrations via migrator.Up()
-		if err := migrator.Up(); err != nil {
-			fmt.Printf("\n%sMigration failed:%s %v\n", colorRed, colorReset, err)
-			os.Exit(1)
+		for _, m := range pending {
+			fmt.Printf("  %s %s\n", check(), muted(m.Version+"_"+m.Description))
 		}
 	}
 
 	fmt.Println()
+	fmt.Printf("%s %s\n", check(), success("Done"))
 }
 `
-
-	// Get module name from go.mod
-	moduleName, err := getModuleName()
-	if err != nil {
-		ui.Error(fmt.Sprintf("Failed to read module name: %v", err))
-		os.Exit(1)
-	}
 
 	// Replace import path
 	script = strings.ReplaceAll(script, "IMPORT_PATH", moduleName)
@@ -197,8 +192,7 @@ func main() {
 	}
 	defer os.Remove(tmpFile)
 
-	// Build
-	ui.Step("Compiling migration runner...")
+	// Build silently
 	buildCmd := exec.Command("go", "build", "-o", fmt.Sprintf("%s/migrate", tmpDir), tmpFile)
 	buildOutput, err := buildCmd.CombinedOutput()
 	if err != nil {
@@ -217,12 +211,9 @@ func main() {
 	runCmd.Stderr = os.Stderr
 
 	if err := runCmd.Run(); err != nil {
-		ui.Error(fmt.Sprintf("Migration failed: %v", err))
+		// Error already printed by the runner
 		os.Exit(1)
 	}
-
-	ui.Newline()
-	ui.Success("Done")
 }
 
 func getModuleName() (string, error) {
