@@ -136,3 +136,27 @@ func Spinner(message string, action func() error) error {
 		}
 	}
 }
+
+// TreeItem prints a tree-style item with status
+// prefix: "├─" for middle items, "└─" for last item
+func TreeItem(prefix, label, status string, done bool) {
+	var statusText string
+	if done {
+		statusText = checkSymbol + " " + successStyle.Render(status)
+	} else {
+		statusText = mutedStyle.Render(status)
+	}
+	fmt.Printf("  %s %s %s\n", mutedStyle.Render(prefix), mutedStyle.Render(label), statusText)
+}
+
+// TreeItemSkipped prints a skipped tree item
+func TreeItemSkipped(prefix, label, reason string) {
+	fmt.Printf("  %s %s %s\n", mutedStyle.Render(prefix), mutedStyle.Render(label), warningStyle.Render("skipped ("+reason+")"))
+}
+
+// ClearLines clears n lines above cursor
+func ClearLines(n int) {
+	for i := 0; i < n; i++ {
+		fmt.Print("\033[A\033[K")
+	}
+}

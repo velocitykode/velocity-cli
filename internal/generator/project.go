@@ -114,10 +114,9 @@ func CreateProject(config ProjectConfig) error {
 	ui.Success("Hot reload configured")
 
 	// Install dependencies
-	if err := ui.Spinner("Installing dependencies", func() error {
-		return installDependencies(config.Name)
-	}); err == nil {
-		ui.Success("Dependencies installed")
+	ui.Info("Installing dependencies")
+	if err := installDependencies(config.Name); err != nil {
+		return fmt.Errorf("failed to install dependencies: %w", err)
 	}
 
 	// Run migrations
@@ -222,7 +221,7 @@ func reinitGitRepo(projectPath string) error {
 	return nil
 }
 
-// installDependencies runs go mod tidy and bun install
+// installDependencies runs go mod tidy and bun install in parallel
 func installDependencies(projectPath string) error {
 	absPath, err := filepath.Abs(projectPath)
 	if err != nil {
@@ -233,23 +232,99 @@ func installDependencies(projectPath string) error {
 	os.Chdir(absPath)
 	defer os.Chdir(originalDir)
 
-	// Run go mod tidy to ensure all dependencies are resolved
-	if err := exec.Command("go", "mod", "tidy").Run(); err != nil {
-		return err
+	// Track status
+	type depStatus struct {
+		name   string
+		status string
+		done   bool
+		err    error
 	}
 
-	// Install air for hot reloading
-	exec.Command("go", "install", "github.com/air-verse/air@latest").Run()
+	goStatus := &depStatus{name: "Go dependencies", status: "downloading..."}
+	jsStatus := &depStatus{name: "JS dependencies", status: "downloading..."}
+	airStatus := &depStatus{name: "Air (hot reload)", status: "checking..."}
 
-	// Run bun install (fallback to npm if bun not available)
-	if err := exec.Command("bun", "install").Run(); err != nil {
-		// Try npm as fallback
-		if err := exec.Command("npm", "install").Run(); err != nil {
-			return err
+	// Check if air is already installed
+	airInstalled := isAirInstalled()
+
+	// Print initial tree
+	printDepTree := func() {
+		ui.TreeItem("├─", goStatus.name, goStatus.status, goStatus.done)
+		ui.TreeItem("├─", jsStatus.name, jsStatus.status, jsStatus.done)
+		if airInstalled {
+			ui.TreeItemSkipped("└─", airStatus.name, "already installed")
+		} else {
+			ui.TreeItem("└─", airStatus.name, airStatus.status, airStatus.done)
 		}
 	}
 
+	printDepTree()
+
+	// Run Go and JS deps in parallel
+	done := make(chan bool, 3)
+
+	// Go dependencies
+	go func() {
+		goStatus.err = exec.Command("go", "mod", "tidy").Run()
+		if goStatus.err == nil {
+			goStatus.status = "done"
+			goStatus.done = true
+		} else {
+			goStatus.status = "failed"
+		}
+		done <- true
+	}()
+
+	// JS dependencies
+	go func() {
+		if err := exec.Command("bun", "install").Run(); err != nil {
+			// Try npm as fallback
+			jsStatus.err = exec.Command("npm", "install").Run()
+		}
+		if jsStatus.err == nil {
+			jsStatus.status = "done"
+			jsStatus.done = true
+		} else {
+			jsStatus.status = "failed"
+		}
+		done <- true
+	}()
+
+	// Air installation (only if not already installed)
+	go func() {
+		if !airInstalled {
+			exec.Command("go", "install", "github.com/air-verse/air@latest").Run()
+			airStatus.status = "done"
+			airStatus.done = true
+		}
+		done <- true
+	}()
+
+	// Wait for all to complete, updating display
+	completed := 0
+	for completed < 3 {
+		<-done
+		completed++
+		// Clear and redraw tree
+		ui.ClearLines(3)
+		printDepTree()
+	}
+
+	// Return first error encountered
+	if goStatus.err != nil {
+		return goStatus.err
+	}
+	if jsStatus.err != nil {
+		return jsStatus.err
+	}
+
 	return nil
+}
+
+// isAirInstalled checks if air binary is available
+func isAirInstalled() bool {
+	_, err := exec.LookPath("air")
+	return err == nil
 }
 
 func validateProjectName(name string) error {
