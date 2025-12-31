@@ -37,8 +37,8 @@ jobs:
           git clone https://x-access-token:${{ secrets.VELOCITY_TOKEN }}@github.com/velocitykode/velocity-template.git
           cd velocity-template
 
-          # Update go.mod with new CLI version
-          sed -i "s|github.com/velocitykode/velocity-cli v.*|github.com/velocitykode/velocity-cli ${VERSION}|" go.mod
+          # Use go mod edit to add/update velocity-cli (works whether it exists or not)
+          go mod edit -require=github.com/velocitykode/velocity-cli@${VERSION}
 
           # Commit and push if changed
           if git diff --quiet go.mod; then
