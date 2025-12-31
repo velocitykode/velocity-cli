@@ -22,9 +22,6 @@ func main() {
 	// 1. We're in a Velocity project (has cmd/velocity/main.go)
 	// 2. The command is not a global-only command (new, init, help, etc.)
 	if delegator.ShouldDelegate(os.Args[1:]) {
-		// Check for version mismatch
-		delegator.CheckVersionMismatch(cmd.Version)
-
 		// Delegate to project's CLI
 		if err := delegator.Delegate(os.Args[1:]); err != nil {
 			os.Exit(1)

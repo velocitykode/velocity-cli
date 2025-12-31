@@ -5,6 +5,7 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/velocitykode/velocity-cli/internal/ui"
 )
 
 // Version is the CLI version
@@ -18,9 +19,11 @@ func init() {
 
 func initRootCmd() {
 	rootCmd = &cobra.Command{
-		Use:     "velocity",
-		Short:   "Velocity CLI - Development tools for Velocity projects",
-		Version: Version,
+		Use:           "velocity",
+		Short:         "Velocity CLI - Development tools for Velocity projects",
+		Version:       Version,
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
@@ -39,7 +42,11 @@ func Execute() error {
 	if rootCmd == nil {
 		initRootCmd()
 	}
-	return rootCmd.Execute()
+	err := rootCmd.Execute()
+	if err != nil {
+		ui.Error(err.Error())
+	}
+	return err
 }
 
 // RootCmd returns the root command for testing
