@@ -1,11 +1,11 @@
 package framework
 
 import (
+	"runtime"
 	"testing"
 )
 
 func TestBuildCmd(t *testing.T) {
-	// Test command properties
 	if BuildCmd.Use != "build" {
 		t.Errorf("BuildCmd.Use = %s, want 'build'", BuildCmd.Use)
 	}
@@ -14,30 +14,26 @@ func TestBuildCmd(t *testing.T) {
 		t.Error("BuildCmd.Short is empty")
 	}
 
-	// Test flags
-	flags := BuildCmd.Flags()
-
-	// Check output flag
-	outputFlag := flags.Lookup("output")
-	if outputFlag == nil {
-		t.Error("Output flag not found")
-	}
-	if outputFlag.DefValue != "./dist/app" {
-		t.Errorf("Output default = %s, want './dist/app'", outputFlag.DefValue)
+	// Verify flags exist with correct defaults
+	tests := []struct {
+		name         string
+		defaultValue string
+	}{
+		{"output", "./dist/app"},
+		{"os", runtime.GOOS},
+		{"arch", runtime.GOARCH},
 	}
 
-	// Check os flag
-	osFlag := flags.Lookup("os")
-	if osFlag == nil {
-		t.Error("OS flag not found")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			flag := BuildCmd.Flags().Lookup(tt.name)
+			if flag == nil {
+				t.Errorf("Flag %q not found", tt.name)
+				return
+			}
+			if flag.DefValue != tt.defaultValue {
+				t.Errorf("Flag %q default = %q, want %q", tt.name, flag.DefValue, tt.defaultValue)
+			}
+		})
 	}
-
-	// Check arch flag
-	archFlag := flags.Lookup("arch")
-	if archFlag == nil {
-		t.Error("Arch flag not found")
-	}
-
-	// Just verify that the command has flags defined
-	// The specific flags are implementation details that may change
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/velocitykode/velocity-cli/cmd"
 	"github.com/velocitykode/velocity-cli/framework"
+	"github.com/velocitykode/velocity-cli/internal/delegator"
 	"github.com/velocitykode/velocity-cli/internal/version"
 )
 
@@ -17,7 +18,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create unified root command
+	// Check if we should delegate to project CLI
+	// This happens when:
+	// 1. We're in a Velocity project (has cmd/velocity/main.go)
+	// 2. The command is not a global-only command (new, init, help, etc.)
+	if delegator.ShouldDelegate(os.Args[1:]) {
+		// Check for version mismatch
+		delegator.CheckVersionMismatch(cmd.Version)
+
+		// Delegate to project's CLI
+		if err := delegator.Delegate(os.Args[1:]); err != nil {
+			os.Exit(1)
+		}
+		return
+	}
+
+	// Run global CLI
 	rootCmd := &cobra.Command{
 		Use:     "velocity",
 		Short:   "CLI for the Velocity Go web framework",
@@ -30,27 +46,20 @@ func main() {
 	// Disable default completion command
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
-	// Project commands
+	// Global commands (always available)
 	rootCmd.AddCommand(cmd.NewCmd)
 	rootCmd.AddCommand(cmd.InitCmd)
 	rootCmd.AddCommand(cmd.ConfigCmd)
+	rootCmd.AddCommand(cmd.VersionCmd)
 
-	// Development commands
+	// Framework commands (for backward compatibility, will be deprecated)
+	// These are now also available via project CLI when delegating
 	rootCmd.AddCommand(framework.ServeCmd)
 	rootCmd.AddCommand(framework.BuildCmd)
-
-	// Database commands
 	rootCmd.AddCommand(framework.MigrateCmd)
 	rootCmd.AddCommand(framework.MigrateFreshCmd)
-
-	// Code generation
 	rootCmd.AddCommand(framework.MakeControllerCmd)
-
-	// Utility commands
 	rootCmd.AddCommand(cmd.KeyCmd)
-
-	// Info commands
-	rootCmd.AddCommand(cmd.VersionCmd)
 
 	// Initialize help after adding all commands
 	cmd.InitHelp(rootCmd)

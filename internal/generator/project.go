@@ -242,6 +242,7 @@ func createDirectoryStructure(projectPath string) error {
 		"app/http/middleware",
 		"app/models",
 		"bootstrap",
+		"cmd/velocity",
 		"config",
 		"database/migrations",
 		"database/factories",

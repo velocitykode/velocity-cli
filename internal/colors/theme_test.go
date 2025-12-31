@@ -45,17 +45,14 @@ func TestStyleDefinitions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test that styles can render text
 			result := tt.style.Render("test")
 			if result == "" {
 				t.Errorf("Style %s.Render() returned empty string", tt.name)
 			}
+			// Verify the rendered output contains the input text
+			if len(result) < 4 { // "test" is 4 chars, output should be at least that
+				t.Errorf("Style %s.Render() output too short: %q", tt.name, result)
+			}
 		})
 	}
-}
-
-func TestInit(t *testing.T) {
-	// Test that init function runs without panic
-	// This is implicitly tested by the package import
-	t.Log("Init function executed successfully")
 }
