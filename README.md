@@ -1,37 +1,22 @@
-# Velocity CLI
+# ⚠️ DEPRECATED
 
-The official CLI for the [Velocity](https://github.com/velocitykode/velocity) Go web framework.
+This repository has been split into two separate tools:
 
-## Installation
+| New Repo | Purpose |
+|----------|---------|
+| [**velocity-installer**](https://github.com/velocitykode/velocity-installer) | Global CLI (Homebrew) - `velocity new`, `velocity init`, `velocity config` |
+| [**vel**](https://github.com/velocitykode/vel) | Project CLI (built from source) - `vel serve`, `vel migrate`, `vel make:controller` |
 
-### Homebrew (macOS)
+## Migration
 
-```bash
-brew tap velocitykode/tap
-brew install velocity
-```
-
-### Go
+Install the new CLI:
 
 ```bash
-go install github.com/velocitykode/velocity-cli@latest
+brew upgrade velocity
 ```
 
-## Usage
-
-Create a new project:
-
-```bash
-velocity new myapp
-cd myapp
-go run main.go
-```
+The Homebrew formula now points to `velocity-installer`.
 
 ## Documentation
 
 Full documentation at **[velocitykode.com/docs](https://velocitykode.com/docs)**
-
-## License
-
-MIT License - See [LICENSE](LICENSE) for details.
-
