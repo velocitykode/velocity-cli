@@ -160,9 +160,13 @@ func TestRunMakeController_WithPath(t *testing.T) {
 }
 
 func TestRunMakeController_NoArgs(t *testing.T) {
-	err := runMakeController(nil, []string{})
+	// Test via command's Args validation
+	err := makeControllerCmd.Args(makeControllerCmd, []string{})
 	if err == nil {
-		t.Error("runMakeController() should error with no args")
+		t.Error("Args validation should error with no args")
+	}
+	if !strings.Contains(err.Error(), "controller name is required") {
+		t.Errorf("Error should mention 'controller name is required', got: %v", err)
 	}
 }
 

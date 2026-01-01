@@ -20,11 +20,20 @@ var (
 )
 
 var makeControllerCmd = &cobra.Command{
-	Use:   "make:controller [name]",
-	Short: "Create a new controller",
-	Long:  `Create a new controller class in the app/http/controllers directory.`,
-	Args:  cobra.ExactArgs(1),
-	RunE:  runMakeController,
+	Use:     "make:controller [name]",
+	Short:   "Create a new controller",
+	Long:    `Create a new controller class in the app/http/controllers directory.`,
+	Example: "  velocity make:controller User\n  velocity make:controller Admin/Dashboard --resource",
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return fmt.Errorf("controller name is required\n\nUsage:\n  velocity make:controller [name]\n\nExamples:\n  velocity make:controller User\n  velocity make:controller Admin/Dashboard --resource")
+		}
+		if len(args) > 1 {
+			return fmt.Errorf("too many arguments, expected only controller name")
+		}
+		return nil
+	},
+	RunE: runMakeController,
 }
 
 func init() {
@@ -33,9 +42,6 @@ func init() {
 }
 
 func runMakeController(cmd *cobra.Command, args []string) error {
-	if len(args) == 0 {
-		return fmt.Errorf("controller name is required")
-	}
 	name := args[0]
 
 	ui.Header("make:controller")
