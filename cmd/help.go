@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/velocitykode/velocity-cli/internal/banner"
 	"github.com/velocitykode/velocity-cli/internal/colors"
+	"github.com/velocitykode/velocity-cli/internal/detector"
 )
 
 var (
@@ -23,17 +24,38 @@ func InitHelp(root *cobra.Command) {
 
 // Command groups for organized help output
 var commandGroups = map[string][]string{
-	"project":     {"new", "init"},
-	"development": {"serve", "build"},
-	"database":    {"migrate", "migrate:fresh"},
-	"make":        {"make:controller"},
-	"key":         {"key:generate"},
+	"project": {"new", "init"},
 }
 
-var groupOrder = []string{"project", "development", "database", "make", "key"}
+// Project commands shown when inside a Velocity project
+var projectCommandGroups = map[string][]commandInfo{
+	"development": {
+		{"serve", "Start the development server with hot reload"},
+		{"build", "Build the application for production"},
+	},
+	"database": {
+		{"migrate", "Run database migrations"},
+		{"migrate:fresh", "Drop all tables and re-run migrations"},
+	},
+	"generators": {
+		{"make:controller", "Create a new controller"},
+	},
+	"security": {
+		{"key:generate", "Generate application encryption key"},
+	},
+}
+
+type commandInfo struct {
+	name string
+	desc string
+}
+
+var groupOrder = []string{"project"}
+var projectGroupOrder = []string{"development", "database", "generators", "security"}
 
 func customHelpFunc(cmd *cobra.Command, args []string) {
 	w := cmd.OutOrStdout()
+	inProject := detector.IsVelocityProject()
 
 	// Only show banner for root command
 	if !cmd.HasParent() {
@@ -57,7 +79,7 @@ func customHelpFunc(cmd *cobra.Command, args []string) {
 				}
 			}
 
-			// Print groups
+			// Print global command groups
 			for _, group := range groupOrder {
 				cmds := commandGroups[group]
 				hasCommands := false
@@ -81,6 +103,24 @@ func customHelpFunc(cmd *cobra.Command, args []string) {
 					}
 				}
 				fmt.Fprintln(w)
+			}
+
+			// Print project commands when inside a Velocity project
+			if inProject {
+				for _, group := range projectGroupOrder {
+					cmds := projectCommandGroups[group]
+					if len(cmds) == 0 {
+						continue
+					}
+
+					fmt.Fprintln(w, descStyle.Render(group))
+					for _, c := range cmds {
+						fmt.Fprintf(w, "  %s  %s\n",
+							commandStyle.Width(22).Render(c.name),
+							descStyle.Render(c.desc))
+					}
+					fmt.Fprintln(w)
+				}
 			}
 
 			// Print remaining ungrouped commands (config, help, version)
