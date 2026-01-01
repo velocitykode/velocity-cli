@@ -43,7 +43,7 @@ func Execute() error {
 		initRootCmd()
 	}
 	err := rootCmd.Execute()
-	if err != nil {
+	if err != nil && err.Error() != "" {
 		ui.Error(err.Error())
 	}
 	return err

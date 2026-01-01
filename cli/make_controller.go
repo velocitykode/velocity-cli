@@ -26,7 +26,15 @@ var makeControllerCmd = &cobra.Command{
 	Example: "  velocity make:controller User\n  velocity make:controller Admin/Dashboard --resource",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			return fmt.Errorf("controller name is required\n\nUsage:\n  velocity make:controller [name]\n\nExamples:\n  velocity make:controller User\n  velocity make:controller Admin/Dashboard --resource")
+			ui.Error("controller name is required")
+			ui.Newline()
+			ui.Muted("Usage:")
+			ui.Muted("  velocity make:controller [name]")
+			ui.Newline()
+			ui.Muted("Examples:")
+			ui.Muted("  velocity make:controller User")
+			ui.Muted("  velocity make:controller Admin/Dashboard --resource")
+			return fmt.Errorf("") // Return empty error to exit with code 1
 		}
 		if len(args) > 1 {
 			return fmt.Errorf("too many arguments, expected only controller name")

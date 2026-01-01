@@ -165,9 +165,7 @@ func TestRunMakeController_NoArgs(t *testing.T) {
 	if err == nil {
 		t.Error("Args validation should error with no args")
 	}
-	if !strings.Contains(err.Error(), "controller name is required") {
-		t.Errorf("Error should mention 'controller name is required', got: %v", err)
-	}
+	// Error is now empty (styled output printed separately)
 }
 
 func TestRunMakeController_DeepNestedPath(t *testing.T) {
