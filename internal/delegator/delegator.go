@@ -91,11 +91,18 @@ func runWithGoRun(args []string) error {
 	return cmd.Run()
 }
 
+// Optional directories that affect the CLI binary when changed.
+// These are imported by cmd/velocity/main.go.
+var cliOptionalDirs = []string{
+	"database/migrations",
+	"bootstrap",
+}
+
 // needsRebuild checks if the cached binary needs to be rebuilt.
 // Returns true if:
 // - Binary doesn't exist
 // - go.mod or go.sum is newer than binary
-// - Any .go file in cmd/velocity is newer than binary
+// - Any .go file in CLI source directories is newer than binary
 func needsRebuild(binPath string) bool {
 	binInfo, err := os.Stat(binPath)
 	if err != nil {
@@ -114,26 +121,50 @@ func needsRebuild(binPath string) bool {
 		return true
 	}
 
-	// Check cmd/velocity directory
-	cmdDir := "cmd/velocity"
-	if _, err := os.Stat(cmdDir); err != nil {
-		return true // cmd/velocity doesn't exist
+	// cmd/velocity is required - if missing, rebuild needed
+	if _, err := os.Stat("cmd/velocity"); err != nil {
+		return true
 	}
 
-	// Walk cmd/velocity and check if any .go file is newer
-	err = filepath.Walk(cmdDir, func(path string, info os.FileInfo, err error) error {
+	// Check cmd/velocity (required)
+	if hasNewerGoFiles("cmd/velocity", binTime) {
+		return true
+	}
+
+	// Check optional directories that CLI imports
+	for _, dir := range cliOptionalDirs {
+		if hasNewerGoFiles(dir, binTime) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// hasNewerGoFiles checks if any .go file in dir is newer than the given time.
+// Returns true if newer files found OR if there's an error reading the directory
+// (fail-safe: rebuild if we can't verify).
+func hasNewerGoFiles(dir string, t time.Time) bool {
+	if _, err := os.Stat(dir); err != nil {
+		return false // Directory doesn't exist
+	}
+
+	var found bool
+	var walkErr bool
+	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			walkErr = true
+			return filepath.SkipDir
 		}
 		if !info.IsDir() && strings.HasSuffix(path, ".go") {
-			if info.ModTime().After(binTime) {
-				return fmt.Errorf("rebuild needed")
+			if info.ModTime().After(t) {
+				found = true
+				return filepath.SkipAll
 			}
 		}
 		return nil
 	})
-
-	return err != nil
+	return found || walkErr
 }
 
 // isNewer checks if a file is newer than the given time.
