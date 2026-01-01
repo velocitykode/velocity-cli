@@ -203,6 +203,9 @@ func TestCheckVersionMismatch_NoWarningWhenMatch(t *testing.T) {
 	os.Chdir(tmpDir)
 	defer os.Chdir(originalDir)
 
+	// Reset warning flag for this test
+	versionWarningShown = false
+
 	// Create go.mod with matching version
 	goMod := `module testproject
 
@@ -210,8 +213,12 @@ require github.com/velocitykode/velocity-cli v0.5.0
 `
 	os.WriteFile("go.mod", []byte(goMod), 0644)
 
-	// Should not panic
+	// Should not set warning flag when versions match
 	CheckVersionMismatch("v0.5.0")
+
+	if versionWarningShown {
+		t.Error("versionWarningShown should be false when versions match")
+	}
 }
 
 func TestCheckVersionMismatch_WarningWhenDifferent(t *testing.T) {
@@ -220,6 +227,9 @@ func TestCheckVersionMismatch_WarningWhenDifferent(t *testing.T) {
 	os.Chdir(tmpDir)
 	defer os.Chdir(originalDir)
 
+	// Reset warning flag for this test
+	versionWarningShown = false
+
 	// Create go.mod with different version
 	goMod := `module testproject
 
@@ -227,8 +237,99 @@ require github.com/velocitykode/velocity-cli v0.4.0
 `
 	os.WriteFile("go.mod", []byte(goMod), 0644)
 
-	// Should not panic (warning is printed but we can't easily capture it)
+	// Should set warning flag when versions differ
 	CheckVersionMismatch("v0.5.0")
+
+	if !versionWarningShown {
+		t.Error("versionWarningShown should be true when versions differ")
+	}
+}
+
+func TestCheckVersionMismatch_OnlyShowsOnce(t *testing.T) {
+	tmpDir := t.TempDir()
+	originalDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(originalDir)
+
+	// Reset warning flag
+	versionWarningShown = false
+
+	goMod := `module testproject
+
+require github.com/velocitykode/velocity-cli v0.4.0
+`
+	os.WriteFile("go.mod", []byte(goMod), 0644)
+
+	// First call sets the flag
+	CheckVersionMismatch("v0.5.0")
+	if !versionWarningShown {
+		t.Error("First call should set versionWarningShown")
+	}
+
+	// Calling again should be a no-op (flag already set)
+	// This simulates multiple commands in same session
+	CheckVersionMismatch("v0.6.0") // Different version, but flag prevents warning
+	// If we get here without issues, the function properly checks the flag first
+}
+
+func TestCheckVersionMismatch_NormalizesVersionPrefix(t *testing.T) {
+	tmpDir := t.TempDir()
+	originalDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(originalDir)
+
+	// Reset warning flag
+	versionWarningShown = false
+
+	// Project has "v" prefix
+	goMod := `module testproject
+
+require github.com/velocitykode/velocity-cli v0.5.0
+`
+	os.WriteFile("go.mod", []byte(goMod), 0644)
+
+	// Global without "v" prefix - should still match
+	CheckVersionMismatch("0.5.0")
+
+	if versionWarningShown {
+		t.Error("Versions should match after normalization (v0.5.0 == 0.5.0)")
+	}
+}
+
+func TestCheckVersionMismatch_NoGoMod(t *testing.T) {
+	tmpDir := t.TempDir()
+	originalDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(originalDir)
+
+	// Reset warning flag
+	versionWarningShown = false
+
+	// No go.mod file - should not warn
+	CheckVersionMismatch("v0.5.0")
+
+	if versionWarningShown {
+		t.Error("Should not warn when no go.mod exists")
+	}
+}
+
+func TestGetProjectCLIVersion_Exported(t *testing.T) {
+	tmpDir := t.TempDir()
+	originalDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(originalDir)
+
+	goMod := `module testproject
+
+require github.com/velocitykode/velocity-cli v0.6.3
+`
+	os.WriteFile("go.mod", []byte(goMod), 0644)
+
+	// Test the exported function
+	version := GetProjectCLIVersion()
+	if version != "v0.6.3" {
+		t.Errorf("GetProjectCLIVersion() = %q, want %q", version, "v0.6.3")
+	}
 }
 
 func TestNeedsRebuild_NewerGoFileInCmdVelocity(t *testing.T) {

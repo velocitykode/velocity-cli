@@ -176,8 +176,16 @@ func isNewer(path string, t time.Time) bool {
 	return info.ModTime().After(t)
 }
 
+// versionWarningShown tracks if we've already shown the version warning this session
+var versionWarningShown bool
+
 // CheckVersionMismatch warns if global CLI version differs from project's cli package version.
+// Shows upgrade hint once per session.
 func CheckVersionMismatch(globalVersion string) {
+	if versionWarningShown {
+		return
+	}
+
 	projectVersion := getProjectCLIVersion()
 	if projectVersion == "" {
 		return
@@ -188,8 +196,17 @@ func CheckVersionMismatch(globalVersion string) {
 	project := strings.TrimPrefix(projectVersion, "v")
 
 	if global != project {
-		ui.Warning(fmt.Sprintf("CLI version mismatch: global=%s, project=%s", globalVersion, projectVersion))
+		versionWarningShown = true
+		ui.Newline()
+		ui.Warning(fmt.Sprintf("velocity-cli %s available (project uses %s)", globalVersion, projectVersion))
+		ui.Muted("Run 'velocity upgrade' to update")
+		ui.Newline()
 	}
+}
+
+// GetProjectCLIVersion returns the velocity-cli version from go.mod (exported for upgrade command)
+func GetProjectCLIVersion() string {
+	return getProjectCLIVersion()
 }
 
 // getProjectCLIVersion extracts the velocity-cli version from go.mod.
@@ -204,8 +221,11 @@ func getProjectCLIVersion() string {
 		line = strings.TrimSpace(line)
 		if strings.Contains(line, "github.com/velocitykode/velocity-cli") {
 			parts := strings.Fields(line)
-			if len(parts) >= 2 {
-				return parts[1]
+			// Find the version (starts with 'v')
+			for _, part := range parts {
+				if strings.HasPrefix(part, "v") && len(part) > 1 {
+					return part
+				}
 			}
 		}
 	}
