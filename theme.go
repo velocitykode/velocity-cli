@@ -56,13 +56,26 @@ func init() {
 }
 
 func applyTheme(cfg Config) {
-	colorPrimary = lipgloss.Color(cfg.Colors.Primary)
+	// "default" is a sentinel meaning "do not set a foreground color" —
+	// primary-styled text renders bold in the terminal's own default fg,
+	// useful for CLIs that want to reserve green for success, red for
+	// error, etc. Any other value (including "") is passed to lipgloss
+	// as-is.
+	primaryIsDefault := cfg.Colors.Primary == "default"
+	if primaryIsDefault {
+		colorPrimary = lipgloss.Color("")
+	} else {
+		colorPrimary = lipgloss.Color(cfg.Colors.Primary)
+	}
 	colorSuccess = lipgloss.Color(cfg.Colors.Success)
 	colorWarning = lipgloss.Color(cfg.Colors.Warning)
 	colorError = lipgloss.Color(cfg.Colors.Error)
 	colorMuted = lipgloss.Color(cfg.Colors.Muted)
 
-	primaryStyle = lipgloss.NewStyle().Foreground(colorPrimary).Bold(true)
+	primaryStyle = lipgloss.NewStyle().Bold(true)
+	if !primaryIsDefault {
+		primaryStyle = primaryStyle.Foreground(colorPrimary)
+	}
 	successStyle = lipgloss.NewStyle().Foreground(colorSuccess).Bold(true)
 	warningStyle = lipgloss.NewStyle().Foreground(colorWarning).Bold(true)
 	errorStyle = lipgloss.NewStyle().Foreground(colorError).Bold(true)
@@ -74,23 +87,35 @@ func applyTheme(cfg Config) {
 	symbolWarn = lipgloss.NewStyle().Foreground(colorWarning).Render(cfg.Symbols.Warn)
 	symbolCross = lipgloss.NewStyle().Foreground(colorError).Render(cfg.Symbols.Cross)
 
-	noteBoxStyle = lipgloss.NewStyle().
+	// Helper: apply Foreground(colorPrimary) only when primary isn't the
+	// "default" sentinel. Keeps lipgloss from emitting an empty-color ANSI.
+	withPrimaryFg := func(s lipgloss.Style) lipgloss.Style {
+		if primaryIsDefault {
+			return s
+		}
+		return s.Foreground(colorPrimary)
+	}
+
+	noteBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(colorPrimary).
 		Padding(0, 2)
+	if !primaryIsDefault {
+		noteBox = noteBox.BorderForeground(colorPrimary)
+	}
+	noteBoxStyle = noteBox
 
 	alertBoxStyle = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(colorError).
 		Padding(0, 2)
 
-	tableHeaderStyle = lipgloss.NewStyle().Foreground(colorPrimary).Bold(true)
+	tableHeaderStyle = withPrimaryFg(lipgloss.NewStyle().Bold(true))
 	tableSepStyle = lipgloss.NewStyle().Foreground(colorMuted)
 
-	promptLabelStyle = lipgloss.NewStyle().Foreground(colorPrimary).Bold(true)
+	promptLabelStyle = withPrimaryFg(lipgloss.NewStyle().Bold(true))
 	promptHelpStyle = lipgloss.NewStyle().Foreground(colorMuted)
-	cursorStyle = lipgloss.NewStyle().Foreground(colorPrimary).Bold(true)
-	selectedStyle = lipgloss.NewStyle().Foreground(colorPrimary).Bold(true)
+	cursorStyle = withPrimaryFg(lipgloss.NewStyle().Bold(true))
+	selectedStyle = withPrimaryFg(lipgloss.NewStyle().Bold(true))
 	unselectedStyle = lipgloss.NewStyle().Foreground(colorMuted)
 	errorMsgStyle = lipgloss.NewStyle().Foreground(colorError)
 
