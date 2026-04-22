@@ -21,11 +21,19 @@ jobs:
       - name: Check if release needed
         id: check
         run: |
-          LAST_MSG=$(git log -1 --pretty=%B)
-          if echo "$LAST_MSG" | grep -q "^Bump version"; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
+          # Only release when commits since last tag contain a user-visible
+          # prefix. Housekeeping (ci/chore/docs/refactor/style/test/build) lands
+          # on main without triggering a tag or the installer cascade.
+          LAST_TAG=$(git tag --sort=-v:refname | head -1)
+          LAST_TAG=${LAST_TAG:-v0.0.0}
+          COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s" 2>/dev/null || git log --pretty=format:"%s")
+
+          if echo "$COMMITS" | grep -qiE "^feat|^fix|^perf|^add|BREAKING|!:"; then
             echo "skip=false" >> $GITHUB_OUTPUT
+            echo "Releasable commits found since $LAST_TAG - proceeding."
+          else
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "No feat/fix/perf/BREAKING commits since $LAST_TAG - skipping release."
           fi
 
       - name: Calculate version
@@ -116,3 +124,26 @@ jobs:
           VERSION=v${{ steps.version.outputs.new }}
           curl -sf "https://proxy.golang.org/github.com/velocitykode/velocity-cli/@v/${VERSION}.info" || true
           echo "Go module proxy notified for ${VERSION}"
+
+      - name: Cascade to velocity-installer
+        if: steps.check.outputs.skip == 'false'
+        env:
+          VELOCITY_TOKEN: ${{ secrets.VELOCITY_TOKEN }}
+        run: |
+          NEW_VERSION=${{ steps.version.outputs.new }}
+          git clone "https://x-access-token:${VELOCITY_TOKEN}@github.com/velocitykode/velocity-installer.git" /tmp/installer
+          cd /tmp/installer
+
+          go get "github.com/velocitykode/velocity-cli@v${NEW_VERSION}"
+          go mod tidy
+
+          if git diff --quiet go.mod go.sum; then
+            echo "No go.mod changes - installer already on v${NEW_VERSION}."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add go.mod go.sum
+          git commit -m "fix(deps): bump velocity-cli to v${NEW_VERSION}"
+          git push origin main
