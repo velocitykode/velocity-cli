@@ -27,6 +27,7 @@ var (
 	symbolCheck string
 	symbolWarn  string
 	symbolCross string
+	symbolTip   string
 )
 
 // Box styles for Note/Alert.
@@ -86,6 +87,7 @@ func applyTheme(cfg Config) {
 	symbolCheck = lipgloss.NewStyle().Foreground(colorSuccess).Render(cfg.Symbols.Check)
 	symbolWarn = lipgloss.NewStyle().Foreground(colorWarning).Render(cfg.Symbols.Warn)
 	symbolCross = lipgloss.NewStyle().Foreground(colorError).Render(cfg.Symbols.Cross)
+	symbolTip = primaryStyle.Render(cfg.Symbols.Tip)
 
 	// Helper: apply Foreground(colorPrimary) only when primary isn't the
 	// "default" sentinel. Keeps lipgloss from emitting an empty-color ANSI.

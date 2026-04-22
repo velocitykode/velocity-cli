@@ -15,6 +15,14 @@ func Info(message string) {
 	fprintf("%s %s\n", symbolArrow, mutedStyle.Render(message))
 }
 
+// Tip prints a highlighted hint with an info glyph. Styled with
+// primaryStyle (bold) so it stands out from Info's muted line —
+// intended for callouts like "install bun for faster installs" that
+// users might otherwise skim past.
+func Tip(message string) {
+	fprintf("%s %s\n", symbolTip, primaryStyle.Render(message))
+}
+
 // Success prints a success message with a checkmark.
 func Success(message string) {
 	fprintf("%s %s\n", symbolCheck, successStyle.Render(message))
