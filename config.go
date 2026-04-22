@@ -22,12 +22,14 @@ type Colors struct {
 	Muted   string `toml:"muted"`
 }
 
-// Symbols are the glyphs used by Info (arrow), Success (check), Warning (warn), Error (cross).
+// Symbols are the glyphs used by Info (arrow), Success (check),
+// Warning (warn), Error (cross), and Tip (info glyph).
 type Symbols struct {
 	Arrow string `toml:"arrow"`
 	Check string `toml:"check"`
 	Warn  string `toml:"warn"`
 	Cross string `toml:"cross"`
+	Tip   string `toml:"tip"`
 }
 
 var activeConfig Config
@@ -46,6 +48,7 @@ func defaultConfig() Config {
 			Check: "✓",
 			Warn:  "!",
 			Cross: "✗",
+			Tip:   "ℹ",
 		},
 	}
 }
@@ -86,6 +89,9 @@ func Configure(cfg Config) {
 	}
 	if cfg.Symbols.Cross != "" {
 		merged.Symbols.Cross = cfg.Symbols.Cross
+	}
+	if cfg.Symbols.Tip != "" {
+		merged.Symbols.Tip = cfg.Symbols.Tip
 	}
 	applyTheme(merged)
 }

@@ -21,6 +21,16 @@ func TestInfo(t *testing.T) {
 	}
 }
 
+func TestTip(t *testing.T) {
+	out := capture(func() { Tip("install bun") })
+	if !strings.Contains(out, "install bun") {
+		t.Errorf("Tip() output missing message, got: %q", out)
+	}
+	if !strings.Contains(out, "ℹ") {
+		t.Errorf("Tip() output missing info glyph, got: %q", out)
+	}
+}
+
 func TestSuccess(t *testing.T) {
 	out := capture(func() { Success("done") })
 	if !strings.Contains(out, "done") {
