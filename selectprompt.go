@@ -19,11 +19,14 @@ func WithSelectDefault(val string) SelectOption {
 }
 
 type selectModel struct {
-	label   string
-	options []string
-	cursor  int
-	done    bool
+	label     string
+	options   []string
+	cursor    int
+	done      bool
+	cancelled bool
 }
+
+func (m selectModel) Cancelled() bool { return m.cancelled }
 
 func newSelectModel(label string, options []string, cfg *selectConfig) selectModel {
 	cursor := 0
@@ -48,8 +51,9 @@ func (m selectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case tea.KeyCtrlC:
 			m.cursor = -1
+			m.cancelled = true
 			m.done = true
 			return m, tea.Quit
 		case tea.KeyEnter:
@@ -119,6 +123,7 @@ func Select(label string, options []string, opts ...SelectOption) string {
 	if err != nil {
 		return ""
 	}
+	ExitOnCancel(finalModel)
 	if fm, ok := finalModel.(selectModel); ok {
 		return fm.value()
 	}

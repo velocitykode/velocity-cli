@@ -43,7 +43,10 @@ type textModel struct {
 	cfg       *textConfig
 	errMsg    string
 	done      bool
+	cancelled bool
 }
+
+func (m textModel) Cancelled() bool { return m.cancelled }
 
 func newTextModel(label string, cfg *textConfig) textModel {
 	ti := textinput.New()
@@ -73,7 +76,8 @@ func (m textModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case tea.KeyCtrlC:
+			m.cancelled = true
 			m.done = true
 			return m, tea.Quit
 		case tea.KeyEnter:
@@ -137,6 +141,7 @@ func Text(label string, opts ...TextOption) string {
 	if err != nil {
 		return cfg.defaultVal
 	}
+	ExitOnCancel(finalModel)
 	if fm, ok := finalModel.(textModel); ok {
 		return fm.value()
 	}

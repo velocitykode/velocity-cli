@@ -72,13 +72,19 @@ func TestMultiselectModel_Enter(t *testing.T) {
 	}
 }
 
-func TestMultiselectModel_Escape(t *testing.T) {
+func TestMultiselectModel_CtrlC(t *testing.T) {
 	m := newMultiselectModel("Pick:", []string{"a", "b"})
 	m.selected[0] = true
 
-	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
 	mm := updated.(multiselectModel)
+	if !mm.Cancelled() {
+		t.Error("ctrl+c should mark model cancelled")
+	}
 	if mm.selected != nil {
-		t.Error("esc should clear selection")
+		t.Error("ctrl+c should clear selection")
+	}
+	if cmd == nil {
+		t.Error("expected quit command")
 	}
 }
