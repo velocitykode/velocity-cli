@@ -29,7 +29,10 @@ type confirmModel struct {
 	defaultVal bool
 	value      bool
 	done       bool
+	cancelled  bool
 }
+
+func (m confirmModel) Cancelled() bool { return m.cancelled }
 
 func newConfirmModel(label string, cfg *confirmConfig) confirmModel {
 	return confirmModel{
@@ -45,8 +48,9 @@ func (m confirmModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case tea.KeyCtrlC:
 			m.value = false
+			m.cancelled = true
 			m.done = true
 			return m, tea.Quit
 		case tea.KeyEnter:
@@ -116,6 +120,7 @@ func Confirm(label string, opts ...ConfirmOption) bool {
 	if err != nil {
 		return cfg.defaultVal
 	}
+	ExitOnCancel(finalModel)
 	if fm, ok := finalModel.(confirmModel); ok {
 		return fm.value
 	}

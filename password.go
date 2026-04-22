@@ -11,7 +11,10 @@ type passwordModel struct {
 	label     string
 	textInput textinput.Model
 	done      bool
+	cancelled bool
 }
+
+func (m passwordModel) Cancelled() bool { return m.cancelled }
 
 func newPasswordModel(label string) passwordModel {
 	ti := textinput.New()
@@ -37,7 +40,8 @@ func (m passwordModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case tea.KeyCtrlC:
+			m.cancelled = true
 			m.done = true
 			return m, tea.Quit
 		case tea.KeyEnter:
@@ -72,6 +76,7 @@ func Password(label string) string {
 	if err != nil {
 		return ""
 	}
+	ExitOnCancel(finalModel)
 	if fm, ok := finalModel.(passwordModel); ok {
 		return fm.textInput.Value()
 	}

@@ -60,15 +60,21 @@ func TestSearchModel_Enter(t *testing.T) {
 	}
 }
 
-func TestSearchModel_Escape(t *testing.T) {
+func TestSearchModel_CtrlC(t *testing.T) {
 	m := newSearchModel("Find:", filterFn)
-	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
 	sm := updated.(searchModel)
+	if !sm.Cancelled() {
+		t.Error("ctrl+c should mark model cancelled")
+	}
 	if !sm.done {
-		t.Error("esc should set done")
+		t.Error("ctrl+c should set done")
 	}
 	if sm.value() != "" {
-		t.Error("esc should return empty value")
+		t.Error("ctrl+c should return empty value")
+	}
+	if cmd == nil {
+		t.Error("expected quit command")
 	}
 }
 

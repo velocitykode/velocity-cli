@@ -7,12 +7,15 @@ import (
 )
 
 type multiselectModel struct {
-	label    string
-	options  []string
-	cursor   int
-	selected map[int]bool
-	done     bool
+	label     string
+	options   []string
+	cursor    int
+	selected  map[int]bool
+	done      bool
+	cancelled bool
 }
+
+func (m multiselectModel) Cancelled() bool { return m.cancelled }
 
 func newMultiselectModel(label string, options []string) multiselectModel {
 	return multiselectModel{
@@ -28,8 +31,9 @@ func (m multiselectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case tea.KeyCtrlC:
 			m.selected = nil
+			m.cancelled = true
 			m.done = true
 			return m, tea.Quit
 		case tea.KeyEnter:
@@ -123,6 +127,7 @@ func Multiselect(label string, options []string) []string {
 	if err != nil {
 		return nil
 	}
+	ExitOnCancel(finalModel)
 	if fm, ok := finalModel.(multiselectModel); ok {
 		return fm.values()
 	}

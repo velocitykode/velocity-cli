@@ -14,7 +14,10 @@ type searchModel struct {
 	results   []string
 	cursor    int
 	done      bool
+	cancelled bool
 }
+
+func (m searchModel) Cancelled() bool { return m.cancelled }
 
 func newSearchModel(label string, fn func(string) []string) searchModel {
 	ti := textinput.New()
@@ -44,8 +47,9 @@ func (m searchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case tea.KeyCtrlC:
 			m.cursor = -1
+			m.cancelled = true
 			m.done = true
 			return m, tea.Quit
 		case tea.KeyEnter:
@@ -125,6 +129,7 @@ func Search(label string, fn func(query string) []string) string {
 	if err != nil {
 		return ""
 	}
+	ExitOnCancel(finalModel)
 	if fm, ok := finalModel.(searchModel); ok {
 		return fm.value()
 	}
