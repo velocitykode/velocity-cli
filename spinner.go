@@ -55,7 +55,18 @@ func (m spinnerModel) View() string {
 
 // Spinner displays an animated spinner while fn executes.
 // Returns the error from fn, if any.
+//
+// Without an interactive terminal (CI, headless, piped output) the
+// bubbletea program cannot open /dev/tty and p.Run would fail, masking fn's
+// result entirely. In that case Spinner degrades to a plain one-line message
+// and runs fn directly, so the wrapped work still executes and its real error
+// is returned unchanged.
 func Spinner(message string, fn func() error) error {
+	if !interactive() {
+		fprintf("  %s\n", message)
+		return fn()
+	}
+
 	m := newSpinnerModel(message)
 	p := tea.NewProgram(m, tea.WithOutput(os.Stderr))
 
