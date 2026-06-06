@@ -48,6 +48,24 @@ func TestSpinnerModel_CtrlC(t *testing.T) {
 	}
 }
 
+// TestSpinner_NonInteractive_RunsFnAndReturnsError covers the headless/CI
+// path: with no terminal (as under `go test`), Spinner must run fn and return
+// its result verbatim, never the bubbletea "could not open a new TTY" error.
+func TestSpinner_NonInteractive_RunsFnAndReturnsError(t *testing.T) {
+	called := false
+	if err := Spinner("working", func() error { called = true; return nil }); err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if !called {
+		t.Fatal("fn was not executed")
+	}
+
+	want := errors.New("boom")
+	if got := Spinner("working", func() error { return want }); got != want {
+		t.Fatalf("expected fn error %v, got %v", want, got)
+	}
+}
+
 func TestSpinnerModel_View(t *testing.T) {
 	m := newSpinnerModel("building")
 	v := m.View()
