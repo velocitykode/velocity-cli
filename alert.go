@@ -1,4 +1,4 @@
-package cli
+package prism
 
 // Note prints a message in a rounded box with primary-colored border.
 func Note(message string) {

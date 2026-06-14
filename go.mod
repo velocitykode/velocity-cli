@@ -1,4 +1,4 @@
-module github.com/velocitykode/velocity-cli
+module github.com/velocitykode/prism
 
 go 1.26.1
 
